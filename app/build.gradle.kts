@@ -13,8 +13,8 @@ android {
         applicationId = "com.mymoney2.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
+        versionName = (project.findProperty("versionName") as? String) ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -22,9 +22,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("release.keystore")
-            storePassword = "password123"
-            keyAlias = "release"
-            keyPassword = "password123"
+            storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: "password123"
+            keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: "release"
+            keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: "password123"
         }
     }
 
