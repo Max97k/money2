@@ -17,6 +17,8 @@ jobs:
   build-and-release:
     name: Build and Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       # 1. Checkout 程式碼
       - name: Checkout code
