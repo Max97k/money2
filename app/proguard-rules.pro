@@ -7,3 +7,6 @@
 
 # If you keep the line number information, uncomment this to hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Fix missing classes from Tink / Security Crypto
+-dontwarn com.google.errorprone.annotations.**
