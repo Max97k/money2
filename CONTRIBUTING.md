@@ -36,5 +36,13 @@ We use GitHub issues to track public bugs. Report a bug by opening a new issue; 
 - Be specific!
 - Give sample code if you can.
 
+## Versioning Rules
+We use [Semantic Versioning](http://semver.org/) for versioning. 
+- **MAJOR** version when you make incompatible API changes,
+- **MINOR** version when you add functionality in a backwards compatible manner, and
+- **PATCH** version when you make backwards compatible bug fixes.
+
+Ensure that the `versionName` in `app/build.gradle.kts` matches the newly released version tag.
+
 ## License
 By contributing, you agree that your contributions will be licensed under its MIT License.

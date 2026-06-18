@@ -8,7 +8,7 @@ Money2 is a fast, smooth, and privacy-focused local investment portfolio managem
 - **Dashboard**: View your total value, day's gain, total gain, and a performance chart of your investments.
 - **Holdings**: A complete list of your investments, showing symbols, current price, daily change, quantity, total value, and return rate.
 - **Transactions**: Quick and smooth transaction entry using a global FAB and Bottom Sheet.
-- **BYOK (Bring Your Own Key)**: Use your own Finnhub API key to fetch real-time US stock quotes. TWSE (Taiwan Stock Exchange) data is fetched directly without rate limits.
+- **Proxy API Integration**: Uses a Cloudflare Worker proxy for Finnhub to fetch real-time US stock quotes securely without needing client-side API keys.
 
 ## Tech Stack
 
@@ -40,12 +40,9 @@ This project is built using modern Android development best practices (Clean Arc
 2. Open the project in Android Studio.
 3. Build and run the app on an emulator or physical device running Android 8.0 (API 26) or higher.
 
-### API Key Setup
+### Versioning
 
-To fetch US stock prices, you need a Finnhub API key.
-1. Sign up at [Finnhub](https://finnhub.io/) to get a free API key.
-2. Open the Money2 app, navigate to **Settings**, and enter your API key.
-3. The key will be securely saved locally on your device.
+We use [Semantic Versioning](http://semver.org/) for versioning. For the versions available, see the tags on this repository.
 
 ## Contributing
 

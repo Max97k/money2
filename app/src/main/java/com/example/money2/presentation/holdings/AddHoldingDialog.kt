@@ -7,11 +7,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.money2.data.remote.dto.FinnhubSearchResult
 import com.example.money2.domain.model.AssetType
+
+import androidx.compose.ui.res.stringResource
+import com.example.money2.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddHoldingDialog(
+    searchResults: List<FinnhubSearchResult>,
+    onSearch: (String) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: (symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType) -> Unit
 ) {
@@ -19,37 +25,69 @@ fun AddHoldingDialog(
     var name by remember { mutableStateOf("") }
     var quantityStr by remember { mutableStateOf("") }
     var avgCostStr by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    var selectedAssetType by remember { mutableStateOf(AssetType.STOCK) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新增持倉") },
+        title = { Text(stringResource(R.string.add_holding_title)) },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(8.dp)
+                    .imePadding(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = symbol,
-                    onValueChange = { symbol = it },
-                    label = { Text("代號 (Symbol)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                var searchExpanded by remember { mutableStateOf(false) }
+
+                ExposedDropdownMenuBox(
+                    expanded = searchExpanded && searchResults.isNotEmpty(),
+                    onExpandedChange = { searchExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = symbol,
+                        onValueChange = {
+                            symbol = it
+                            onSearch(it)
+                            searchExpanded = true
+                        },
+                        label = { Text(stringResource(R.string.holding_symbol)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+                    
+                    if (searchResults.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = searchExpanded,
+                            onDismissRequest = { searchExpanded = false },
+                            modifier = Modifier.heightIn(max = 250.dp)
+                        ) {
+                            searchResults.forEach { result ->
+                                DropdownMenuItem(
+                                    text = { Text("${result.displaySymbol} - ${result.description}") },
+                                    onClick = {
+                                        symbol = result.displaySymbol
+                                        name = result.description
+                                        searchExpanded = false
+                                        onSearch("") // close results
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
-                    label = { Text("名稱 (Name)") },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.holding_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = quantityStr,
                     onValueChange = { quantityStr = it },
-                    label = { Text("數量 (Quantity)") },
+                    label = { Text(stringResource(R.string.holding_quantity)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
@@ -57,44 +95,11 @@ fun AddHoldingDialog(
                 OutlinedTextField(
                     value = avgCostStr,
                     onValueChange = { avgCostStr = it },
-                    label = { Text("平均成本 (Avg Cost)") },
+                    label = { Text(stringResource(R.string.holding_avg_cost)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
-                
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedAssetType.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("資產類型 (Asset Type)") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        AssetType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    selectedAssetType = type
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
             }
         },
         confirmButton = {
@@ -103,16 +108,16 @@ fun AddHoldingDialog(
                     val quantity = quantityStr.toDoubleOrNull() ?: 0.0
                     val avgCost = avgCostStr.toDoubleOrNull() ?: 0.0
                     if (symbol.isNotBlank() && quantity > 0) {
-                        onConfirm(symbol, name, quantity, avgCost, selectedAssetType)
+                        onConfirm(symbol, name, quantity, avgCost, AssetType.STOCK)
                     }
                 }
             ) {
-                Text("確認")
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

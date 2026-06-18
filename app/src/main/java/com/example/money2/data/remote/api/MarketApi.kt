@@ -18,4 +18,9 @@ interface MarketApi {
         @Query("q") query: String,
         @Header("x-proxy-secret") proxySecret: String = "wealth-manager-super-secret-2026"
     ): FinnhubSearchResponse
+
+    @GET("exchangerate/latest/USD")
+    suspend fun getExchangeRates(
+        @Header("x-proxy-secret") proxySecret: String = "wealth-manager-super-secret-2026"
+    ): com.example.money2.data.remote.dto.ExchangeRateResponse
 }

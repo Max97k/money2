@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Money2</string>
+    <string name="tab_dashboard">總覽</string>
+    <string name="tab_holdings">持倉</string>
+    <string name="tab_settings">設定</string>
+    
+    <string name="dashboard_title">資產總覽</string>
+    <string name="net_balance">淨資產餘額</string>
+    <string name="total_income">總收入</string>
+    <string name="total_expense">總支出</string>
+    
+    <string name="holdings_title">持倉管理</string>
+    <string name="no_holdings">目前無持倉，請點擊右下角新增。</string>
+    <string name="quantity_label">數量: %1$s</string>
+    <string name="cost_label">成本: $%1$s</string>
+    <string name="total_value_label">總價值: $%1$s</string>
+    <string name="unrealized_pnl_label">未實現損益: %1$s%2$s</string>
+    
+    <string name="add_holding_title">新增持倉</string>
+    <string name="holding_symbol">代號 (Symbol)</string>
+    <string name="holding_name">名稱 (Name)</string>
+    <string name="holding_quantity">數量 (Quantity)</string>
+    <string name="holding_avg_cost">平均成本 (Avg Cost)</string>
+    <string name="holding_asset_type">資產類型 (Asset Type)</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">取消</string>
+    <string name="save">儲存</string>
+    
+    <string name="settings_title">設定</string>
+    <string name="settings_under_development">設定功能開發中...</string>
+
+    <string name="transactions_title">收支記錄</string>
+    <string name="no_transactions">目前沒有記錄</string>
+    <string name="transaction_title">標題</string>
+    <string name="transaction_amount">金額</string>
+    <string name="transaction_category">分類 (如: 飲食, 薪水)</string>
+    <string name="total_assets">總資產</string>
+    <string name="today_pnl">今日盈虧</string>
+    <string name="total_pnl">總盈虧</string>
+    <string name="api_key_saved">API Key 已儲存</string>
+    <string name="save_api_key">儲存 API Key</string>
+    <string name="currency_settings">幣別設定</string>
+    <string name="usd">USD (美金)</string>
+    <string name="twd">TWD (台幣)</string>
+    <string name="exchange_rate">美金對台幣匯率</string>
+    <string name="rate_saved">匯率已儲存</string>
+    <string name="invalid_rate">請輸入有效的匯率數值</string>
+    <string name="save_rate">儲存匯率</string>
+    <string name="add_transaction_title">新增收支記錄</string>
+    <string name="expense">支出</string>
+    <string name="income">收入</string>
+</resources>

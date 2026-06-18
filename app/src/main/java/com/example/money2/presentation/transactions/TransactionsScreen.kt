@@ -20,6 +20,9 @@ import com.example.money2.domain.model.TransactionType
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
 
+import androidx.compose.ui.res.stringResource
+import com.example.money2.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionsScreen(
@@ -32,7 +35,7 @@ fun TransactionsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("收支記錄") },
+                title = { Text(stringResource(R.string.transactions_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -56,7 +59,7 @@ fun TransactionsScreen(
         ) {
             if (transactions.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("目前沒有記錄", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.no_transactions), style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
                 LazyColumn(

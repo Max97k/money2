@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.money2.domain.model.TransactionType
+import androidx.compose.ui.res.stringResource
+import com.example.money2.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +37,7 @@ fun AddTransactionBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "新增收支記錄",
+                text = stringResource(R.string.add_transaction_title),
                 style = MaterialTheme.typography.titleLarge
             )
 
@@ -44,19 +46,19 @@ fun AddTransactionBottomSheet(
                     selected = type == TransactionType.EXPENSE,
                     onClick = { type = TransactionType.EXPENSE }
                 )
-                Text(text = "支出", modifier = Modifier.padding(end = 16.dp))
+                Text(text = stringResource(R.string.expense), modifier = Modifier.padding(end = 16.dp))
 
                 RadioButton(
                     selected = type == TransactionType.INCOME,
                     onClick = { type = TransactionType.INCOME }
                 )
-                Text(text = "收入")
+                Text(text = stringResource(R.string.income))
             }
 
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("標題") },
+                label = { Text(stringResource(R.string.transaction_title)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -64,7 +66,7 @@ fun AddTransactionBottomSheet(
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
-                label = { Text("金額") },
+                label = { Text(stringResource(R.string.transaction_amount)) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true
@@ -73,7 +75,7 @@ fun AddTransactionBottomSheet(
             OutlinedTextField(
                 value = category,
                 onValueChange = { category = it },
-                label = { Text("分類 (如: 飲食, 薪水)") },
+                label = { Text(stringResource(R.string.transaction_category)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -84,7 +86,7 @@ fun AddTransactionBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
@@ -94,7 +96,7 @@ fun AddTransactionBottomSheet(
                     },
                     enabled = title.isNotBlank() && amount.isNotBlank() && category.isNotBlank()
                 ) {
-                    Text("儲存")
+                    Text(stringResource(R.string.save))
                 }
             }
         }

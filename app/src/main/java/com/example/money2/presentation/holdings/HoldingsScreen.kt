@@ -18,6 +18,11 @@ import androidx.navigation.NavController
 import com.example.money2.domain.model.Holding
 import org.koin.androidx.compose.koinViewModel
 
+import androidx.compose.ui.res.stringResource
+import com.example.money2.R
+import com.example.money2.utils.CurrencyFormatter
+import com.example.money2.utils.LocalCurrencyInfo
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoldingsScreen(
@@ -25,18 +30,23 @@ fun HoldingsScreen(
     viewModel: HoldingsViewModel = koinViewModel()
 ) {
     val holdings by viewModel.holdings.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("持倉管理") },
+                title = { Text(stringResource(R.string.holdings_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
+                    val settingsViewModel: com.example.money2.presentation.settings.SettingsViewModel = koinViewModel()
+                    TextButton(onClick = { settingsViewModel.toggleCurrency() }) {
+                        Text(LocalCurrencyInfo.current.currency, fontWeight = FontWeight.Bold)
+                    }
                     IconButton(onClick = { viewModel.refreshPrices() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh Prices")
                     }
@@ -59,7 +69,7 @@ fun HoldingsScreen(
         ) {
             if (holdings.isEmpty()) {
                 Text(
-                    text = "目前無持倉，請點擊右下角新增。",
+                    text = stringResource(R.string.no_holdings),
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -71,7 +81,10 @@ fun HoldingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(holdings) { holding ->
-                        HoldingItem(holding = holding)
+                        HoldingItem(
+                            holding = holding,
+                            onClick = { navController.navigate(com.example.money2.presentation.navigation.NavRoutes.HoldingDetail.createRoute(holding.symbol)) }
+                        )
                     }
                 }
             }
@@ -79,10 +92,16 @@ fun HoldingsScreen(
 
         if (showDialog) {
             AddHoldingDialog(
-                onDismiss = { showDialog = false },
+                searchResults = searchResults,
+                onSearch = { query -> viewModel.searchStocks(query) },
+                onDismiss = { 
+                    showDialog = false
+                    viewModel.searchStocks("") // clear search results
+                },
                 onConfirm = { symbol, name, quantity, avgCost, assetType ->
                     viewModel.addHolding(symbol, name, quantity, avgCost, assetType)
                     showDialog = false
+                    viewModel.searchStocks("") // clear search results
                 }
             )
         }
@@ -90,14 +109,16 @@ fun HoldingsScreen(
 }
 
 @Composable
-fun HoldingItem(holding: Holding) {
-    val totalValue = holding.quantity * holding.currentPrice
-    val totalCost = holding.quantity * holding.avgCost
+fun HoldingItem(holding: Holding, onClick: () -> Unit = {}) {
+    val totalValue = holding.totalQuantity * holding.currentPrice
+    val totalCost = holding.totalQuantity * holding.avgCost
     val unrealizedPnl = totalValue - totalCost
     val pnlColor = if (unrealizedPnl >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)
+    val currencyInfo = LocalCurrencyInfo.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
@@ -115,7 +136,7 @@ fun HoldingItem(holding: Holding) {
                     Text(text = holding.name, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(
-                    text = String.format("$%.2f", holding.currentPrice),
+                    text = CurrencyFormatter.format(holding.currentPrice, currencyInfo.currency, currencyInfo.exchangeRate),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -124,17 +145,17 @@ fun HoldingItem(holding: Holding) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "數量: ${holding.quantity}", style = MaterialTheme.typography.bodyMedium)
-                Text(text = "成本: $${holding.avgCost}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.quantity_label, holding.totalQuantity.toString()), style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.cost_label, CurrencyFormatter.format(holding.avgCost, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "總價值: $${String.format("%.2f", totalValue)}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.total_value_label, CurrencyFormatter.format(totalValue, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "未實現損益: ${if (unrealizedPnl >= 0) "+" else ""}${String.format("%.2f", unrealizedPnl)}",
+                    text = stringResource(R.string.unrealized_pnl_label, if (unrealizedPnl >= 0) "+" else "", CurrencyFormatter.format(unrealizedPnl, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")),
                     style = MaterialTheme.typography.bodyMedium,
                     color = pnlColor,
                     fontWeight = FontWeight.Bold

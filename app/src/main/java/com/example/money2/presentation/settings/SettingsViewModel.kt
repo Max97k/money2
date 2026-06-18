@@ -6,15 +6,41 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import com.example.money2.domain.repository.MarketRepository
+
 class SettingsViewModel(
-    private val encryptedPrefs: EncryptedPrefs
+    private val encryptedPrefs: EncryptedPrefs,
+    private val marketRepository: MarketRepository
 ) : ViewModel() {
 
-    private val _apiKey = MutableStateFlow(encryptedPrefs.getApiKey() ?: "")
-    val apiKey: StateFlow<String> = _apiKey.asStateFlow()
 
-    fun saveApiKey(key: String) {
-        encryptedPrefs.saveApiKey(key)
-        _apiKey.value = key
+
+    val selectedCurrency: StateFlow<String> = encryptedPrefs.selectedCurrencyFlow
+    val exchangeRate: StateFlow<Float> = encryptedPrefs.exchangeRateFlow
+
+    init {
+        viewModelScope.launch {
+            val result = marketRepository.getExchangeRates()
+            result.getOrNull()?.let { rates ->
+                rates["TWD"]?.let { twdRate ->
+                    encryptedPrefs.saveExchangeRate(twdRate.toFloat())
+                }
+            }
+        }
+    }
+
+    fun toggleCurrency() {
+        val newCurrency = if (selectedCurrency.value == "USD") "TWD" else "USD"
+        saveSelectedCurrency(newCurrency)
+    }
+
+    fun saveSelectedCurrency(currency: String) {
+        encryptedPrefs.saveSelectedCurrency(currency)
+    }
+
+    fun saveExchangeRate(rate: Float) {
+        encryptedPrefs.saveExchangeRate(rate)
     }
 }

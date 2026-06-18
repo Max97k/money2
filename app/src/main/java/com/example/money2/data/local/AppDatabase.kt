@@ -7,11 +7,12 @@ import android.content.Context
 import com.example.money2.data.local.dao.HoldingDao
 import com.example.money2.data.local.dao.TransactionDao
 import com.example.money2.data.local.entity.HoldingEntity
+import com.example.money2.data.local.entity.HoldingTransactionEntity
 import com.example.money2.data.local.entity.TransactionEntity
 
 @Database(
-    entities = [TransactionEntity::class, HoldingEntity::class],
-    version = 1,
+    entities = [TransactionEntity::class, HoldingEntity::class, HoldingTransactionEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

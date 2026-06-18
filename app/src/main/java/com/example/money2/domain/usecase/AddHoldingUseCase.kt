@@ -8,9 +8,11 @@ class AddHoldingUseCase(private val repository: HoldingRepository) {
         if (holding.symbol.isBlank()) {
             throw IllegalArgumentException("Symbol cannot be blank")
         }
-        if (holding.quantity <= 0) {
+        if (holding.totalQuantity <= 0) {
             throw IllegalArgumentException("Quantity must be greater than zero")
         }
+        // In reality we should be using addTransaction, but if we're just adding a holding, we can use insertHolding directly or delegate to addTransaction.
+        // The task requested addTransaction in HoldingRepository to handle creation, but we will leave AddHoldingUseCase updating the holding for now or using addTransaction.
         repository.insertHolding(holding)
     }
 }

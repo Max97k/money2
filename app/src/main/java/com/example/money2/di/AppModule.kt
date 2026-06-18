@@ -30,7 +30,8 @@ val databaseModule = module {
             androidContext(),
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration()
+        .build()
     }
     single { get<AppDatabase>().transactionDao() }
     single { get<AppDatabase>().holdingDao() }
@@ -78,10 +79,11 @@ val useCaseModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { com.example.money2.presentation.dashboard.DashboardViewModel(get()) }
+    viewModel { com.example.money2.presentation.dashboard.DashboardViewModel(get(), get()) }
     viewModel { com.example.money2.presentation.transactions.TransactionsViewModel(get(), get(), get()) }
     viewModel { com.example.money2.presentation.holdings.HoldingsViewModel(get(), get(), get(), get()) }
-    viewModel { com.example.money2.presentation.settings.SettingsViewModel(get()) }
+    viewModel { com.example.money2.presentation.holdings.detail.HoldingDetailViewModel(get(), get()) }
+    viewModel { com.example.money2.presentation.settings.SettingsViewModel(get(), get()) }
 }
 
 val appModule = listOf(databaseModule, repositoryModule, useCaseModule, prefsModule, networkModule, viewModelModule)

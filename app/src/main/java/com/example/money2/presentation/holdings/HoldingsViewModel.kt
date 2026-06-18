@@ -2,6 +2,7 @@ package com.example.money2.presentation.holdings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.money2.data.remote.dto.FinnhubSearchResult
 import com.example.money2.domain.model.AssetType
 import com.example.money2.domain.model.Holding
 import com.example.money2.domain.repository.HoldingRepository
@@ -31,17 +32,32 @@ class HoldingsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
 
+    private val _searchResults = MutableStateFlow<List<FinnhubSearchResult>>(emptyList())
+    val searchResults: StateFlow<List<FinnhubSearchResult>> = _searchResults
+
+    fun searchStocks(query: String) {
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            return
+        }
+        viewModelScope.launch {
+            val result = marketRepository.searchStocks(query)
+            result.onSuccess { list ->
+                _searchResults.value = list
+            }
+        }
+    }
+
     fun addHolding(symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType) {
         viewModelScope.launch {
             try {
-                addHoldingUseCase(
-                    Holding(
-                        symbol = symbol.uppercase(),
-                        name = name,
-                        quantity = quantity,
-                        avgCost = avgCost,
-                        assetType = assetType
-                    )
+                holdingRepository.addTransaction(
+                    symbol = symbol.uppercase(),
+                    name = name,
+                    type = "BUY",
+                    quantity = quantity,
+                    price = avgCost,
+                    assetType = assetType
                 )
             } catch (e: Exception) {
                 e.printStackTrace()

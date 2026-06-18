@@ -19,10 +19,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.money2.presentation.navigation.MoneyNavGraph
 import com.example.money2.presentation.navigation.NavRoutes
+import com.example.money2.presentation.settings.SettingsViewModel
 import com.example.money2.ui.theme.MoneyTheme
+import com.example.money2.utils.CurrencyInfo
+import com.example.money2.utils.LocalCurrencyInfo
+import org.koin.androidx.viewmodel.ext.android.getViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.CompositionLocalProvider
+
+import androidx.compose.ui.res.stringResource
 
 data class BottomNavItem(
-    val label: String,
+    val labelRes: Int,
     val icon: ImageVector,
     val route: String
 )
@@ -38,37 +46,46 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
 
                 val bottomNavItems = listOf(
-                    BottomNavItem("總覽", Icons.Filled.Home, NavRoutes.Dashboard.route),
-                    BottomNavItem("持倉", Icons.Filled.PieChart, NavRoutes.Holdings.route),
-                    BottomNavItem("設定", Icons.Filled.Settings, NavRoutes.Settings.route)
+                    BottomNavItem(R.string.tab_dashboard, Icons.Filled.Home, NavRoutes.Dashboard.route),
+                    BottomNavItem(R.string.tab_holdings, Icons.Filled.PieChart, NavRoutes.Holdings.route),
+                    BottomNavItem(R.string.tab_settings, Icons.Filled.Settings, NavRoutes.Settings.route)
                 )
 
-                Scaffold(
-                    bottomBar = {
-                        NavigationBar {
-                            bottomNavItems.forEach { item ->
-                                NavigationBarItem(
-                                    icon = { Icon(item.icon, contentDescription = item.label) },
-                                    label = { Text(item.label) },
-                                    selected = currentRoute == item.route,
-                                    onClick = {
-                                        navController.navigate(item.route) {
-                                            popUpTo(NavRoutes.Dashboard.route) {
-                                                saveState = true
+                val settingsViewModel: SettingsViewModel = getViewModel()
+                val selectedCurrency by settingsViewModel.selectedCurrency.collectAsState()
+                val exchangeRate by settingsViewModel.exchangeRate.collectAsState()
+
+                CompositionLocalProvider(
+                    LocalCurrencyInfo provides CurrencyInfo(selectedCurrency, exchangeRate)
+                ) {
+                    Scaffold(
+                        bottomBar = {
+                            NavigationBar {
+                                bottomNavItems.forEach { item ->
+                                    val labelText = stringResource(item.labelRes)
+                                    NavigationBarItem(
+                                        icon = { Icon(item.icon, contentDescription = labelText) },
+                                        label = { Text(labelText) },
+                                        selected = currentRoute == item.route,
+                                        onClick = {
+                                            navController.navigate(item.route) {
+                                                popUpTo(NavRoutes.Dashboard.route) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
-                    }
-                ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        MoneyNavGraph(
-                            navController = navController
-                        )
+                    ) { innerPadding ->
+                        Box(modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())) {
+                            MoneyNavGraph(
+                                navController = navController
+                            )
+                        }
                     }
                 }
             }

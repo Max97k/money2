@@ -5,20 +5,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 data class DashboardStats(
-    val totalIncome: Double,
-    val totalExpense: Double,
-    val netBalance: Double
+    val totalValue: Double,
+    val todayPnl: Double,
+    val totalPnl: Double
 )
 
 class GetDashboardStatsUseCase(private val repository: HoldingRepository) {
     operator fun invoke(): Flow<DashboardStats> {
         return repository.getAllHoldings().map { holdings ->
-            val totalValue = holdings.sumOf { it.quantity * it.currentPrice }
-            val totalCost = holdings.sumOf { it.quantity * it.avgCost }
+            val totalValue = holdings.sumOf { it.totalQuantity * it.currentPrice }
+            val todayPnl = holdings.sumOf { (it.currentPrice - it.previousClosePrice) * it.totalQuantity }
+            val totalPnl = holdings.sumOf { (it.currentPrice - it.avgCost) * it.totalQuantity }
+            
             DashboardStats(
-                totalIncome = totalValue,
-                totalExpense = totalCost,
-                netBalance = totalValue - totalCost
+                totalValue = totalValue,
+                todayPnl = todayPnl,
+                totalPnl = totalPnl
             )
         }
     }

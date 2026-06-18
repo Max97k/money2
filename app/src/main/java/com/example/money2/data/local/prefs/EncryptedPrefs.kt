@@ -3,6 +3,9 @@ package com.example.money2.data.local.prefs
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class EncryptedPrefs(context: Context) {
     private val masterKey = MasterKey.Builder(context)
@@ -17,11 +20,29 @@ class EncryptedPrefs(context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun saveApiKey(apiKey: String) {
-        sharedPreferences.edit().putString("API_KEY", apiKey).apply()
+    private val _selectedCurrencyFlow = MutableStateFlow(getSelectedCurrency())
+    val selectedCurrencyFlow: StateFlow<String> = _selectedCurrencyFlow.asStateFlow()
+
+    private val _exchangeRateFlow = MutableStateFlow(getExchangeRate())
+    val exchangeRateFlow: StateFlow<Float> = _exchangeRateFlow.asStateFlow()
+
+
+
+    fun saveSelectedCurrency(currency: String) {
+        sharedPreferences.edit().putString("SELECTED_CURRENCY", currency).apply()
+        _selectedCurrencyFlow.value = currency
     }
 
-    fun getApiKey(): String? {
-        return sharedPreferences.getString("API_KEY", null)
+    fun getSelectedCurrency(): String {
+        return sharedPreferences.getString("SELECTED_CURRENCY", "USD") ?: "USD"
+    }
+
+    fun saveExchangeRate(rate: Float) {
+        sharedPreferences.edit().putFloat("EXCHANGE_RATE", rate).apply()
+        _exchangeRateFlow.value = rate
+    }
+
+    fun getExchangeRate(): Float {
+        return sharedPreferences.getFloat("EXCHANGE_RATE", 32.5f)
     }
 }

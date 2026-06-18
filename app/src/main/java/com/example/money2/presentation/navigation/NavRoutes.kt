@@ -7,4 +7,8 @@ sealed class NavRoutes(val route: String) {
     data object Settings : NavRoutes("settings")
     data object AddTransaction : NavRoutes("add_transaction")
     data object AddHolding : NavRoutes("add_holding")
+    
+    data object HoldingDetail : NavRoutes("holding_detail/{symbol}") {
+        fun createRoute(symbol: String) = "holding_detail/$symbol"
+    }
 }
