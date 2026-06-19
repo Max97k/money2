@@ -24,7 +24,7 @@ retrofit = "2.11.0"
 okhttp = "5.4.0"
 
 # Kotlinx Serialization & Coroutines
-kotlinxSerializationJson = "1.8.1"
+kotlinxSerializationJson = "1.11.0"
 kotlinxCoroutinesAndroid = "1.11.0"
 kotlinxCoroutinesTest = "1.10.2"
 
