@@ -20,7 +20,7 @@ room = "2.7.1"
 koin = "4.2.2"
 
 # Retrofit / Network
-retrofit = "2.11.0"
+retrofit = "3.0.0"
 okhttp = "5.4.0"
 
 # Kotlinx Serialization & Coroutines
