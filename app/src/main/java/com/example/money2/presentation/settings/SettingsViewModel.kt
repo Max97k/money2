@@ -2,9 +2,7 @@ package com.example.money2.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import com.example.money2.data.local.prefs.EncryptedPrefs
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
