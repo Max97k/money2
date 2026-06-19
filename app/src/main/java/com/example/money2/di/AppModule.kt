@@ -1,6 +1,7 @@
 package com.example.money2.di
 
 import androidx.room.Room
+import com.example.money2.BuildConfig
 import com.example.money2.data.local.AppDatabase
 import com.example.money2.data.local.prefs.EncryptedPrefs
 import com.example.money2.data.remote.api.MarketApi
@@ -49,7 +50,11 @@ val prefsModule = module {
 val networkModule = module {
     single {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
         OkHttpClient.Builder()
             .addInterceptor(logging)
