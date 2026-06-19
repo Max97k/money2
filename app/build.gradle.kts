@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -17,6 +20,14 @@ android {
         versionName = (project.findProperty("versionName") as? String) ?: "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(FileInputStream(localPropertiesFile))
+        }
+        val proxySecret: String = localProperties.getProperty("PROXY_SECRET") ?: System.getenv("PROXY_SECRET") ?: ""
+        buildConfigField("String", "PROXY_SECRET", "\"$proxySecret\"")
     }
 
     signingConfigs {
