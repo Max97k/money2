@@ -10,7 +10,7 @@ object CurrencyFormatter {
         }
         
         return if (targetCurrency == "TWD") {
-            "NT$ %,.2f".format(convertedAmount)
+            "NT$ %.0f".format(convertedAmount)
         } else {
             "$ %,.2f".format(convertedAmount)
         }
