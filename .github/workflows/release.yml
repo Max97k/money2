@@ -124,3 +124,4 @@ jobs:
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           tracks: internal
           status: completed
+          whatsNewDirectory: play/release-notes
