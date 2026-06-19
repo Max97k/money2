@@ -117,4 +117,132 @@ class GetDashboardStatsUseCaseTest {
         // Total PnL = ((160.0 - 150.0) * 10.0) + ((32000.0 - 30000.0) * 2.0) = 100.0 + 4000.0 = 4100.0
         assertEquals(4100.0, stats.totalPnl, 0.0)
     }
+
+    @Test
+    fun `invoke with USD holding and TWD target converts correctly`() = runTest {
+        val holding = Holding(
+            symbol = "AAPL", // Native currency: USD
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            currentPrice = 160.0,
+            previousClosePrice = 155.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(holding))
+        // Target: TWD, Exchange Rate: 30.0
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("TWD"), flowOf(30.0f))
+
+        val stats = useCase().first()
+
+        // Exchange rate USD -> TWD: 30.0
+        // Current Price in TWD = 160.0 * 30.0 = 4800.0
+        // Prev Close in TWD = 155.0 * 30.0 = 4650.0
+        // Avg Cost in TWD = 150.0 * 30.0 = 4500.0
+
+        // Total Value = 10.0 * 4800.0 = 48000.0
+        assertEquals(48000.0, stats.totalValue, 0.0)
+        // Today PnL = (4800.0 - 4650.0) * 10.0 = 150.0 * 10.0 = 1500.0
+        assertEquals(1500.0, stats.todayPnl, 0.0)
+        // Total PnL = (4800.0 - 4500.0) * 10.0 = 300.0 * 10.0 = 3000.0
+        assertEquals(3000.0, stats.totalPnl, 0.0)
+    }
+
+    @Test
+    fun `invoke with TWD holding and USD target converts correctly`() = runTest {
+        val holding = Holding(
+            symbol = "2330.TW", // Native currency: TWD
+            name = "TSMC",
+            totalQuantity = 1000.0,
+            avgCost = 500.0,
+            currentPrice = 600.0,
+            previousClosePrice = 580.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(holding))
+        // Target: USD, Exchange Rate: 30.0
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("USD"), flowOf(30.0f))
+
+        val stats = useCase().first()
+
+        // Exchange rate TWD -> USD: / 30.0
+        // Current Price in USD = 600.0 / 30.0 = 20.0
+        // Prev Close in USD = 580.0 / 30.0 = 19.333...
+        // Avg Cost in USD = 500.0 / 30.0 = 16.666...
+
+        // Total Value = 1000.0 * 20.0 = 20000.0
+        assertEquals(20000.0, stats.totalValue, 0.001)
+        // Today PnL = (20.0 - (580.0/30.0)) * 1000.0 = (600.0 - 580.0) / 30.0 * 1000.0 = 20.0 / 30.0 * 1000.0 = 666.666...
+        assertEquals(666.666, stats.todayPnl, 0.001)
+        // Total PnL = (20.0 - (500.0/30.0)) * 1000.0 = (600.0 - 500.0) / 30.0 * 1000.0 = 100.0 / 30.0 * 1000.0 = 3333.333...
+        assertEquals(3333.333, stats.totalPnl, 0.001)
+    }
+
+    @Test
+    fun `invoke with TWD holding and TWD target applies no conversion`() = runTest {
+        val holding = Holding(
+            symbol = "2330.TW", // Native currency: TWD
+            name = "TSMC",
+            totalQuantity = 1000.0,
+            avgCost = 500.0,
+            currentPrice = 600.0,
+            previousClosePrice = 580.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(holding))
+        // Target: TWD, Exchange Rate: 30.0
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("TWD"), flowOf(30.0f))
+
+        val stats = useCase().first()
+
+        // No conversion
+        // Total Value = 1000.0 * 600.0 = 600000.0
+        assertEquals(600000.0, stats.totalValue, 0.0)
+        // Today PnL = (600.0 - 580.0) * 1000.0 = 20.0 * 1000.0 = 20000.0
+        assertEquals(20000.0, stats.todayPnl, 0.0)
+        // Total PnL = (600.0 - 500.0) * 1000.0 = 100.0 * 1000.0 = 100000.0
+        assertEquals(100000.0, stats.totalPnl, 0.0)
+    }
+
+    @Test
+    fun `invoke with mixed holdings converts to target currency correctly`() = runTest {
+        val usHolding = Holding(
+            symbol = "AAPL", // Native: USD
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            currentPrice = 160.0,
+            previousClosePrice = 155.0,
+            assetType = AssetType.STOCK
+        )
+        val twHolding = Holding(
+            symbol = "0050.TW", // Native: TWD
+            name = "Yuanta Taiwan 50",
+            totalQuantity = 1000.0,
+            avgCost = 130.0,
+            currentPrice = 140.0,
+            previousClosePrice = 135.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(usHolding, twHolding))
+        // Target: TWD, Exchange Rate: 30.0
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("TWD"), flowOf(30.0f))
+
+        val stats = useCase().first()
+
+        // US Holding in TWD:
+        // Value = 160 * 30 * 10 = 48000
+        // Today PnL = (160 - 155) * 30 * 10 = 1500
+        // Total PnL = (160 - 150) * 30 * 10 = 3000
+
+        // TW Holding in TWD (No conversion):
+        // Value = 140 * 1000 = 140000
+        // Today PnL = (140 - 135) * 1000 = 5000
+        // Total PnL = (140 - 130) * 1000 = 10000
+
+        // Mixed:
+        assertEquals(48000.0 + 140000.0, stats.totalValue, 0.0)
+        assertEquals(1500.0 + 5000.0, stats.todayPnl, 0.0)
+        assertEquals(3000.0 + 10000.0, stats.totalPnl, 0.0)
+    }
 }
