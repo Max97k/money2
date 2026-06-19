@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Maintain dependencies for Gradle (Android)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    commit-message:
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 10
+    # Group common Android dependencies to reduce PR noise
+    groups:
+      androidx-compose:
+        patterns:
+          - "androidx.compose.*"
+      androidx-core:
+        patterns:
+          - "androidx.*"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin.*"
+          - "org.jetbrains.kotlinx.*"
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    commit-message:
+      prefix: "ci(deps)"
