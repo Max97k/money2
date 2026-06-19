@@ -11,16 +11,63 @@ import com.example.money2.domain.model.HoldingTransactionType
 fun HoldingWithTransactions.toDomain(): Holding {
     var q = 0.0
     var c = 0.0
-    for (t in transactions.sortedBy { it.dateMillis }) {
-        if (t.type == "BUY") {
-            q += t.quantity
-            c += t.quantity * t.price
-        } else if (t.type == "SELL") {
-            val avg = if (q > 0) c / q else 0.0
-            q -= t.quantity
-            c -= t.quantity * avg
+
+    var isSorted = true
+    var lastDate = Long.MIN_VALUE
+    for (i in 0 until transactions.size) {
+        val d = transactions[i].dateMillis
+        if (d < lastDate) {
+            isSorted = false
+            break
+        }
+        lastDate = d
+    }
+
+    val mappedTransactions = ArrayList<HoldingTransaction>(transactions.size)
+
+    if (isSorted) {
+        for (i in 0 until transactions.size) {
+            val t = transactions[i]
+            if (t.type == "BUY") {
+                q += t.quantity
+                c += t.quantity * t.price
+            } else if (t.type == "SELL") {
+                val avg = if (q > 0) c / q else 0.0
+                q -= t.quantity
+                c -= t.quantity * avg
+            }
+            mappedTransactions.add(HoldingTransaction(
+                id = t.id,
+                symbol = t.symbol,
+                type = HoldingTransactionType.valueOf(t.type),
+                quantity = t.quantity,
+                price = t.price,
+                dateMillis = t.dateMillis
+            ))
+        }
+    } else {
+        val sortedEntities = transactions.sortedBy { it.dateMillis }
+        for (i in 0 until sortedEntities.size) {
+            val t = sortedEntities[i]
+            if (t.type == "BUY") {
+                q += t.quantity
+                c += t.quantity * t.price
+            } else if (t.type == "SELL") {
+                val avg = if (q > 0) c / q else 0.0
+                q -= t.quantity
+                c -= t.quantity * avg
+            }
+            mappedTransactions.add(HoldingTransaction(
+                id = t.id,
+                symbol = t.symbol,
+                type = HoldingTransactionType.valueOf(t.type),
+                quantity = t.quantity,
+                price = t.price,
+                dateMillis = t.dateMillis
+            ))
         }
     }
+
     val avgCost = if (q > 0) c / q else 0.0
 
     return Holding(
@@ -31,7 +78,7 @@ fun HoldingWithTransactions.toDomain(): Holding {
         currentPrice = holding.currentPrice,
         previousClosePrice = holding.previousClosePrice,
         assetType = AssetType.valueOf(holding.assetType),
-        transactions = transactions.map { it.toDomain() }
+        transactions = mappedTransactions
     )
 }
 
