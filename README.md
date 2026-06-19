@@ -2,6 +2,13 @@
 
 Money2 is a fast, smooth, and privacy-focused local investment portfolio management application for Android. It focuses on tracking stocks and ETFs with a seamless user experience, inspired by Google Finance.
 
+## 📚 Documentation
+
+- [📝 Implementation Plan](Implementation_Plan.md) - Architecture, scope, and development phases.
+- [🛡️ Privacy Policy](PRIVACY.md) - Details on our local-first, privacy-focused approach.
+- [🤝 Contributing](CONTRIBUTING.md) - Guidelines for submitting issues and pull requests.
+- [⚖️ License](LICENSE) - MIT License details.
+- [🔖 Third-Party Notices](THIRD_PARTY_NOTICES.md) - Acknowledgments and open-source licenses.
 ## Features
 
 - **Privacy-First**: No backend server. All your data, including API keys, is stored locally and securely using Android's `EncryptedSharedPreferences` and `Room Database`.
