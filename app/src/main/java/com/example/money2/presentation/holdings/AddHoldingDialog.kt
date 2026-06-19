@@ -11,6 +11,8 @@ import com.example.money2.data.remote.dto.FinnhubSearchResult
 import com.example.money2.domain.model.AssetType
 
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import com.example.money2.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,12 +21,28 @@ fun AddHoldingDialog(
     searchResults: List<FinnhubSearchResult>,
     onSearch: (String) -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: (symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType) -> Unit
+    onConfirm: (symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType, dateMillis: Long) -> Unit
 ) {
     var symbol by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var quantityStr by remember { mutableStateOf("") }
     var avgCostStr by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -92,13 +110,30 @@ fun AddHoldingDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
+                val nativeCurrency = if (symbol.endsWith(".TW") || symbol.endsWith(".TWO")) "TWD" else "USD"
                 OutlinedTextField(
                     value = avgCostStr,
                     onValueChange = { avgCostStr = it },
-                    label = { Text(stringResource(R.string.holding_avg_cost)) },
+                    label = { Text(stringResource(R.string.holding_avg_cost) + " ($nativeCurrency)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
+                )
+                
+                val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                val formatter = java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault())
+                OutlinedTextField(
+                    value = formatter.format(java.util.Date(selectedDate)),
+                    onValueChange = {},
+                    label = { Text("Date") },
+                    readOnly = true,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.Add, contentDescription = "Select Date")
+                        }
+                    }
                 )
             }
         },
@@ -108,7 +143,8 @@ fun AddHoldingDialog(
                     val quantity = quantityStr.toDoubleOrNull() ?: 0.0
                     val avgCost = avgCostStr.toDoubleOrNull() ?: 0.0
                     if (symbol.isNotBlank() && quantity > 0) {
-                        onConfirm(symbol, name, quantity, avgCost, AssetType.STOCK)
+                        val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                        onConfirm(symbol, name, quantity, avgCost, AssetType.STOCK, selectedDate)
                     }
                 }
             ) {

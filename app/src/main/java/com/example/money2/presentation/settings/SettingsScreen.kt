@@ -32,6 +32,7 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -56,64 +57,43 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-
-            val selectedCurrency by viewModel.selectedCurrency.collectAsState()
-            val exchangeRate by viewModel.exchangeRate.collectAsState()
-
-            var exchangeRateInput by remember(exchangeRate) { mutableStateOf(exchangeRate.toString()) }
+            HorizontalDivider()
 
             Text(stringResource(R.string.currency_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
-            Row(
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = selectedCurrency == "USD",
-                        onClick = { viewModel.saveSelectedCurrency("USD") }
-                    )
-                    Text(stringResource(R.string.usd))
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = selectedCurrency == "TWD",
-                        onClick = { viewModel.saveSelectedCurrency("TWD") }
-                    )
-                    Text(stringResource(R.string.twd))
-                }
-            }
-
-            OutlinedTextField(
-                value = exchangeRateInput,
-                onValueChange = { exchangeRateInput = it },
-                label = { Text(stringResource(R.string.exchange_rate)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Button(
-                onClick = {
-                    val rate = exchangeRateInput.toFloatOrNull()
-                    if (rate != null) {
-                        viewModel.saveExchangeRate(rate)
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(navController.context.getString(R.string.rate_saved))
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(navController.context.getString(R.string.invalid_rate))
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.settings_currency), fontWeight = FontWeight.Medium)
+                        val currentCurrency by viewModel.selectedCurrency.collectAsState()
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(currentCurrency, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(onClick = { viewModel.toggleCurrency() }) {
+                                Text("切換")
+                            }
                         }
                     }
-                },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.save_rate))
+                    
+                    HorizontalDivider()
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.exchange_rate), fontWeight = FontWeight.Medium)
+                        val exchangeRate by viewModel.exchangeRate.collectAsState()
+                        Text(exchangeRate.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
 
             HorizontalDivider()
@@ -137,12 +117,12 @@ fun SettingsScreen(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                     TextButton(
-                        onClick = { uriHandler.openUri("https://github.com/b/money2") }, // Replace with real URL
+                        onClick = { uriHandler.openUri("https://github.com/Max97k/money2") },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Info, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("在 GitHub 上查看原始碼")
+                        Text("🌟 GitHub 開源專案")
                     }
                 }
             }

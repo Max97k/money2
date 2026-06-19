@@ -17,12 +17,24 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
+import kotlinx.coroutines.delay
+
 class HoldingsViewModel(
     private val getHoldingsUseCase: GetHoldingsUseCase,
     private val addHoldingUseCase: AddHoldingUseCase,
     private val marketRepository: MarketRepository,
     private val holdingRepository: HoldingRepository
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                delay(10000) // initial delay, or every 10s wait, let's do 60s
+                refreshPrices()
+                delay(60000)
+            }
+        }
+    }
 
     val holdings: StateFlow<List<Holding>> = getHoldingsUseCase()
         .stateIn(
@@ -50,7 +62,7 @@ class HoldingsViewModel(
         }
     }
 
-    fun addHolding(symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType) {
+    fun addHolding(symbol: String, name: String, quantity: Double, avgCost: Double, assetType: AssetType, dateMillis: Long = System.currentTimeMillis()) {
         viewModelScope.launch {
             try {
                 holdingRepository.addTransaction(
@@ -59,7 +71,8 @@ class HoldingsViewModel(
                     type = "BUY",
                     quantity = quantity,
                     price = avgCost,
-                    assetType = assetType
+                    assetType = assetType,
+                    dateMillis = dateMillis
                 )
             } catch (e: Exception) {
                 e.printStackTrace()

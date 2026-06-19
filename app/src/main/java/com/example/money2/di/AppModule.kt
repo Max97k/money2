@@ -24,6 +24,7 @@ import com.example.money2.domain.usecase.DeleteTransactionUseCase
 import com.example.money2.domain.usecase.GetDashboardStatsUseCase
 import com.example.money2.domain.usecase.GetHoldingsUseCase
 import com.example.money2.domain.usecase.GetTransactionsUseCase
+import com.example.money2.presentation.dashboard.DashboardViewModel
 
 val databaseModule = module {
     single {
@@ -77,14 +78,14 @@ val useCaseModule = module {
     single { GetTransactionsUseCase(get()) }
     single { AddTransactionUseCase(get()) }
     single { DeleteTransactionUseCase(get()) }
-    single { GetDashboardStatsUseCase(get()) }
+    single { GetDashboardStatsUseCase(get(), get()) }
     
     single { GetHoldingsUseCase(get()) }
     single { AddHoldingUseCase(get()) }
 }
 
 val viewModelModule = module {
-    viewModel { com.example.money2.presentation.dashboard.DashboardViewModel(get(), get()) }
+    viewModel { DashboardViewModel(get(), get(), get(), get(), get()) }
     viewModel { com.example.money2.presentation.transactions.TransactionsViewModel(get(), get(), get()) }
     viewModel { com.example.money2.presentation.holdings.HoldingsViewModel(get(), get(), get(), get()) }
     viewModel { com.example.money2.presentation.holdings.detail.HoldingDetailViewModel(get(), get()) }

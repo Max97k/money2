@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +21,14 @@ import androidx.compose.ui.res.stringResource
 import com.example.money2.R
 import com.example.money2.utils.CurrencyFormatter
 import com.example.money2.utils.LocalCurrencyInfo
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import com.example.money2.presentation.components.SpotlightTour
+import com.example.money2.presentation.components.SpotlightTarget
+import com.example.money2.data.local.prefs.EncryptedPrefs
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,8 +39,10 @@ fun HoldingsScreen(
     val holdings by viewModel.holdings.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    val currencyInfo = LocalCurrencyInfo.current
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.holdings_title)) },
@@ -43,12 +52,9 @@ fun HoldingsScreen(
                     }
                 },
                 actions = {
-                    val settingsViewModel: com.example.money2.presentation.settings.SettingsViewModel = koinViewModel()
+                    val settingsViewModel: com.example.money2.presentation.settings.SettingsViewModel = org.koin.androidx.compose.koinViewModel()
                     TextButton(onClick = { settingsViewModel.toggleCurrency() }) {
-                        Text(LocalCurrencyInfo.current.currency, fontWeight = FontWeight.Bold)
-                    }
-                    IconButton(onClick = { viewModel.refreshPrices() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh Prices")
+                        Text(currencyInfo.currency, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,8 +104,8 @@ fun HoldingsScreen(
                     showDialog = false
                     viewModel.searchStocks("") // clear search results
                 },
-                onConfirm = { symbol, name, quantity, avgCost, assetType ->
-                    viewModel.addHolding(symbol, name, quantity, avgCost, assetType)
+                onConfirm = { symbol, name, quantity, avgCost, assetType, dateMillis ->
+                    viewModel.addHolding(symbol, name, quantity, avgCost, assetType, dateMillis)
                     showDialog = false
                     viewModel.searchStocks("") // clear search results
                 }
@@ -114,6 +120,7 @@ fun HoldingItem(holding: Holding, onClick: () -> Unit = {}) {
     val totalCost = holding.totalQuantity * holding.avgCost
     val unrealizedPnl = totalValue - totalCost
     val pnlColor = if (unrealizedPnl >= 0) Color(0xFF4CAF50) else Color(0xFFF44336)
+    val nativeCurrency = if (holding.symbol.endsWith(".TW") || holding.symbol.endsWith(".TWO")) "TWD" else "USD"
     val currencyInfo = LocalCurrencyInfo.current
 
     Card(
@@ -136,7 +143,7 @@ fun HoldingItem(holding: Holding, onClick: () -> Unit = {}) {
                     Text(text = holding.name, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(
-                    text = CurrencyFormatter.format(holding.currentPrice, currencyInfo.currency, currencyInfo.exchangeRate),
+                    text = CurrencyFormatter.format(holding.currentPrice, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -146,16 +153,16 @@ fun HoldingItem(holding: Holding, onClick: () -> Unit = {}) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = stringResource(R.string.quantity_label, holding.totalQuantity.toString()), style = MaterialTheme.typography.bodyMedium)
-                Text(text = stringResource(R.string.cost_label, CurrencyFormatter.format(holding.avgCost, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.cost_label, CurrencyFormatter.format(holding.avgCost, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = stringResource(R.string.total_value_label, CurrencyFormatter.format(totalValue, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
+                Text(text = stringResource(R.string.total_value_label, CurrencyFormatter.format(totalValue, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", "")), style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = stringResource(R.string.unrealized_pnl_label, if (unrealizedPnl >= 0) "+" else "", CurrencyFormatter.format(unrealizedPnl, currencyInfo.currency, currencyInfo.exchangeRate).replace("$ ", "").replace("NT$ ", "")),
+                    text = stringResource(R.string.unrealized_pnl_label, if (unrealizedPnl >= 0) "+" else "", CurrencyFormatter.format(unrealizedPnl, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", "")),
                     style = MaterialTheme.typography.bodyMedium,
                     color = pnlColor,
                     fontWeight = FontWeight.Bold

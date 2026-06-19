@@ -30,7 +30,8 @@ fun HoldingWithTransactions.toDomain(): Holding {
         avgCost = avgCost,
         currentPrice = holding.currentPrice,
         previousClosePrice = holding.previousClosePrice,
-        assetType = AssetType.valueOf(holding.assetType)
+        assetType = AssetType.valueOf(holding.assetType),
+        transactions = transactions.map { it.toDomain() }
     )
 }
 

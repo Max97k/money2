@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

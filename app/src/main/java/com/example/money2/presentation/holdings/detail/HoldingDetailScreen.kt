@@ -1,17 +1,21 @@
 package com.example.money2.presentation.holdings.detail
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.money2.domain.model.HoldingTransaction
@@ -33,9 +37,11 @@ fun HoldingDetailScreen(
     val holding by viewModel.holding.collectAsState()
     val transactions by viewModel.transactions.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var transactionToEdit by remember { mutableStateOf<HoldingTransaction?>(null) }
     val currencyInfo = LocalCurrencyInfo.current
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(holding?.name ?: symbol) },
@@ -50,7 +56,10 @@ fun HoldingDetailScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) {
+            FloatingActionButton(onClick = { 
+                transactionToEdit = null
+                showDialog = true 
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Transaction")
             }
         }
@@ -61,6 +70,13 @@ fun HoldingDetailScreen(
                 .padding(paddingValues)
         ) {
             holding?.let { h ->
+                val nativeCurrency = if (h.symbol.endsWith(".TW") || h.symbol.endsWith(".TWO")) "TWD" else "USD"
+                val totalValue = h.totalQuantity * h.currentPrice
+                val totalCost = h.totalQuantity * h.avgCost
+                val dayGain = (h.currentPrice - h.previousClosePrice) * h.totalQuantity
+                val totalGain = totalValue - totalCost
+                val dayGainPct = if (h.previousClosePrice > 0) (h.currentPrice - h.previousClosePrice) / h.previousClosePrice * 100 else 0.0
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -68,9 +84,28 @@ fun HoldingDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "目前價格: ${CurrencyFormatter.format(h.currentPrice, currencyInfo.currency, currencyInfo.exchangeRate)}", style = MaterialTheme.typography.titleMedium)
-                        Text(text = "總持倉量: ${h.totalQuantity}", style = MaterialTheme.typography.titleMedium)
-                        Text(text = "平均成本: ${CurrencyFormatter.format(h.avgCost, currencyInfo.currency, currencyInfo.exchangeRate)}", style = MaterialTheme.typography.titleMedium)
+                        Text(h.symbol, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                        Text(h.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            DetailItem("現價", CurrencyFormatter.format(h.currentPrice, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", ""), Modifier.weight(1f))
+                            DetailItem("數量", h.totalQuantity.toString(), Modifier.weight(1f))
+                            DetailItem("總價值", CurrencyFormatter.format(totalValue, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", ""), Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            val dayGainColor = if (dayGain >= 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                            val totalGainColor = if (totalGain >= 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                            
+                            val dayGainStr = (if (dayGain >= 0) "+" else "") + CurrencyFormatter.format(dayGain, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", "") + " (${String.format(Locale.US, "%.2f", dayGainPct)}%)"
+                            val totalGainStr = (if (totalGain >= 0) "+" else "") + CurrencyFormatter.format(totalGain, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", "")
+                            
+                            DetailItem("今日損益", dayGainStr, Modifier.weight(1f), dayGainColor)
+                            DetailItem("總損益", totalGainStr, Modifier.weight(1f), totalGainColor)
+                            DetailItem("平均成本", CurrencyFormatter.format(h.avgCost, currencyInfo.currency, currencyInfo.exchangeRate, nativeCurrency).replace("$ ", "").replace("NT$ ", ""), Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -87,17 +122,33 @@ fun HoldingDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(transactions) { tx ->
-                    TransactionLotItem(tx)
+                    TransactionLotItem(
+                        tx = tx,
+                        onEdit = { 
+                            transactionToEdit = tx
+                            showDialog = true 
+                        },
+                        onDelete = { viewModel.deleteTransaction(tx.id) }
+                    )
                 }
             }
         }
 
         if (showDialog) {
             AddTransactionDialog(
-                onDismiss = { showDialog = false },
+                initialTx = transactionToEdit,
+                onDismiss = { 
+                    showDialog = false 
+                    transactionToEdit = null
+                },
                 onConfirm = { type, qty, price, dateMillis ->
-                    viewModel.addTransaction(type, qty, price, dateMillis)
+                    if (transactionToEdit != null) {
+                        viewModel.updateTransaction(transactionToEdit!!.id, type, qty, price, dateMillis)
+                    } else {
+                        viewModel.addTransaction(type, qty, price, dateMillis)
+                    }
                     showDialog = false
+                    transactionToEdit = null
                 }
             )
         }
@@ -105,7 +156,7 @@ fun HoldingDetailScreen(
 }
 
 @Composable
-fun TransactionLotItem(tx: HoldingTransaction) {
+fun TransactionLotItem(tx: HoldingTransaction, onEdit: () -> Unit, onDelete: () -> Unit) {
     val isBuy = tx.type.name == "BUY"
     val color = if (isBuy) Color(0xFF4CAF50) else Color(0xFFF44336)
     val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
@@ -122,13 +173,21 @@ fun TransactionLotItem(tx: HoldingTransaction) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(text = if (isBuy) "買入" else "賣出", color = color, fontWeight = FontWeight.Bold)
                 Text(text = formatter.format(Date(tx.dateMillis)), style = MaterialTheme.typography.bodySmall)
             }
-            Column(horizontalAlignment = Alignment.End) {
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.weight(1f)) {
                 Text(text = "數量: ${tx.quantity}")
                 Text(text = "價格: ${CurrencyFormatter.format(tx.price, currencyInfo.currency, currencyInfo.exchangeRate)}")
+            }
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                }
             }
         }
     }
@@ -137,16 +196,17 @@ fun TransactionLotItem(tx: HoldingTransaction) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionDialog(
+    initialTx: HoldingTransaction? = null,
     onDismiss: () -> Unit,
     onConfirm: (type: String, qty: Double, price: Double, dateMillis: Long) -> Unit
 ) {
-    var isBuy by remember { mutableStateOf(true) }
-    var qtyStr by remember { mutableStateOf("") }
-    var priceStr by remember { mutableStateOf("") }
+    var isBuy by remember(initialTx) { mutableStateOf(initialTx?.type?.name != "SELL") }
+    var qtyStr by remember(initialTx) { mutableStateOf(initialTx?.quantity?.toString() ?: "") }
+    var priceStr by remember(initialTx) { mutableStateOf(initialTx?.price?.toString() ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
     
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = System.currentTimeMillis()
+        initialSelectedDateMillis = initialTx?.dateMillis ?: System.currentTimeMillis()
     )
 
     if (showDatePicker) {
@@ -173,15 +233,15 @@ fun AddTransactionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新增交易") },
+        title = { Text(if (initialTx != null) "編輯交易" else "新增交易") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = isBuy, onClick = { isBuy = true })
-                    Text("買入 (BUY)")
+                    Text("買入")
                     Spacer(modifier = Modifier.width(16.dp))
                     RadioButton(selected = !isBuy, onClick = { isBuy = false })
-                    Text("賣出 (SELL)")
+                    Text("賣出")
                 }
                 
                 OutlinedTextField(
@@ -203,6 +263,7 @@ fun AddTransactionDialog(
                     onValueChange = { qtyStr = it },
                     label = { Text("數量") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -210,6 +271,7 @@ fun AddTransactionDialog(
                     onValueChange = { priceStr = it },
                     label = { Text("價格") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -233,4 +295,12 @@ fun AddTransactionDialog(
             }
         }
     )
+}
+
+@Composable
+fun DetailItem(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
+    Column(modifier = modifier) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = valueColor)
+    }
 }

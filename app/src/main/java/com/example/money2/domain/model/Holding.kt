@@ -7,7 +7,8 @@ data class Holding(
     val avgCost: Double,      // 平均成本
     val currentPrice: Double = 0.0,
     val previousClosePrice: Double = 0.0,
-    val assetType: AssetType
+    val assetType: AssetType,
+    val transactions: List<HoldingTransaction> = emptyList()
 )
 
 enum class AssetType { STOCK, ETF, CRYPTO, FUND, OTHER }

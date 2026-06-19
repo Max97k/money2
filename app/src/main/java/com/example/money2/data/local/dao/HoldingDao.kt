@@ -37,4 +37,16 @@ interface HoldingDao {
 
     @Query("SELECT * FROM holding_transactions WHERE symbol = :symbol ORDER BY dateMillis DESC")
     fun getTransactionsBySymbol(symbol: String): Flow<List<HoldingTransactionEntity>>
+
+    @Query("SELECT * FROM holding_transactions WHERE id = :id LIMIT 1")
+    suspend fun getTransactionById(id: Long): HoldingTransactionEntity?
+
+    @Query("SELECT COUNT(*) FROM holding_transactions WHERE symbol = :symbol")
+    suspend fun getTransactionCountBySymbol(symbol: String): Int
+
+    @Query("DELETE FROM holding_transactions WHERE id = :id")
+    suspend fun deleteHoldingTransaction(id: Long)
+
+    @Update
+    suspend fun updateHoldingTransaction(transaction: HoldingTransactionEntity)
 }

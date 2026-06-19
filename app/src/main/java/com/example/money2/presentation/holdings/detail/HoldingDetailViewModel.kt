@@ -46,4 +46,16 @@ class HoldingDetailViewModel(
             holdingRepository.addTransaction(symbol, name, type, quantity, price, assetType, dateMillis)
         }
     }
+
+    fun updateTransaction(id: Long, type: String, quantity: Double, price: Double, dateMillis: Long) {
+        viewModelScope.launch {
+            holdingRepository.updateTransaction(id, type, quantity, price, dateMillis)
+        }
+    }
+
+    fun deleteTransaction(id: Long) {
+        viewModelScope.launch {
+            holdingRepository.deleteTransaction(id)
+        }
+    }
 }

@@ -10,3 +10,5 @@
 
 # Fix missing classes from Tink / Security Crypto
 -dontwarn com.google.errorprone.annotations.**
+
+-keep class com.example.money2.data.remote.dto.** { *; }

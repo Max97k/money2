@@ -2,4 +2,13 @@
 <resources>
 
     <style name="Theme.Money2" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background, animated icon, and theme to initialize. -->
+        <item name="windowSplashScreenBackground">@color/black</item>
+        <!-- Use default icon if no specific animated icon is available -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Set the theme of the Activity that directly follows your splash screen. -->
+        <item name="postSplashScreenTheme">@style/Theme.Money2</item>
+    </style>
 </resources>

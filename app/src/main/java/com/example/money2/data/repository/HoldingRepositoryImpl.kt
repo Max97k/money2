@@ -68,4 +68,29 @@ class HoldingRepositoryImpl(
             )
         )
     }
+
+    override suspend fun deleteTransaction(id: Long) {
+        val tx = dao.getTransactionById(id) ?: return
+        dao.deleteHoldingTransaction(id)
+        
+        val count = dao.getTransactionCountBySymbol(tx.symbol)
+        if (count == 0) {
+            val holding = dao.getHoldingBySymbol(tx.symbol)
+            if (holding != null) {
+                dao.deleteHolding(holding)
+            }
+        }
+    }
+    
+    override suspend fun updateTransaction(id: Long, type: String, quantity: Double, price: Double, dateMillis: Long) {
+        val tx = dao.getTransactionById(id) ?: return
+        dao.updateHoldingTransaction(
+            tx.copy(
+                type = type,
+                quantity = quantity,
+                price = price,
+                dateMillis = dateMillis
+            )
+        )
+    }
 }

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +34,7 @@ fun TransactionsScreen(
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.transactions_title)) },
@@ -70,6 +72,7 @@ fun TransactionsScreen(
                     items(transactions, key = { it.id }) { transaction ->
                         TransactionItem(
                             transaction = transaction,
+                            onEdit = { /* TODO: Implement edit logic */ },
                             onDelete = { viewModel.deleteTransaction(it) }
                         )
                     }
@@ -101,32 +104,42 @@ fun TransactionsScreen(
 @Composable
 fun TransactionItem(
     transaction: Transaction,
+    onEdit: (Transaction) -> Unit,
     onDelete: (Transaction) -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
     ) {
-        ListItem(
-            headlineContent = { Text(transaction.title, fontWeight = FontWeight.Bold) },
-            supportingContent = { Text(transaction.category) },
-            trailingContent = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val isIncome = transaction.type == TransactionType.INCOME
-                    val amountColor = if (isIncome) Color(0xFF388E3C) else Color(0xFFD32F2F)
-                    val amountPrefix = if (isIncome) "+" else ""
-                    Text(
-                        text = "$amountPrefix${transaction.amount}",
-                        color = amountColor,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    IconButton(onClick = { onDelete(transaction) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                    }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(transaction.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(transaction.category, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val isIncome = transaction.type == TransactionType.INCOME
+                val amountColor = if (isIncome) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                val amountPrefix = if (isIncome) "+" else ""
+                Text(
+                    text = "$amountPrefix${transaction.amount}",
+                    color = amountColor,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                IconButton(onClick = { onEdit(transaction) }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
                 }
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
+                IconButton(onClick = { onDelete(transaction) }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
     }
 }

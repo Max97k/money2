@@ -29,6 +29,7 @@
     
     <string name="settings_title">Settings</string>
     <string name="settings_under_development">Settings under development...</string>
+    <string name="settings_currency">Default Currency</string>
 
     <string name="transactions_title">Transactions</string>
     <string name="no_transactions">No records found</string>

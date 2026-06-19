@@ -26,6 +26,9 @@ class EncryptedPrefs(context: Context) {
     private val _exchangeRateFlow = MutableStateFlow(getExchangeRate())
     val exchangeRateFlow: StateFlow<Float> = _exchangeRateFlow.asStateFlow()
 
+    private val _isFirstLaunchFlow = MutableStateFlow(getIsFirstLaunch())
+    val isFirstLaunchFlow: StateFlow<Boolean> = _isFirstLaunchFlow.asStateFlow()
+
 
 
     fun saveSelectedCurrency(currency: String) {
@@ -44,5 +47,14 @@ class EncryptedPrefs(context: Context) {
 
     fun getExchangeRate(): Float {
         return sharedPreferences.getFloat("EXCHANGE_RATE", 32.5f)
+    }
+
+    fun saveIsFirstLaunch(isFirstLaunch: Boolean) {
+        sharedPreferences.edit().putBoolean("IS_FIRST_LAUNCH", isFirstLaunch).apply()
+        _isFirstLaunchFlow.value = isFirstLaunch
+    }
+
+    fun getIsFirstLaunch(): Boolean {
+        return sharedPreferences.getBoolean("IS_FIRST_LAUNCH", true)
     }
 }

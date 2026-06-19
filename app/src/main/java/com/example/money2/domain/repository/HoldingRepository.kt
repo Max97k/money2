@@ -15,4 +15,6 @@ interface HoldingRepository {
     
     fun getTransactions(symbol: String): Flow<List<HoldingTransaction>>
     suspend fun addTransaction(symbol: String, name: String, type: String, quantity: Double, price: Double, assetType: AssetType, dateMillis: Long = System.currentTimeMillis())
+    suspend fun updateTransaction(id: Long, type: String, quantity: Double, price: Double, dateMillis: Long)
+    suspend fun deleteTransaction(id: Long)
 }
