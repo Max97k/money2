@@ -78,7 +78,7 @@ val useCaseModule = module {
     single { GetTransactionsUseCase(get()) }
     single { AddTransactionUseCase(get()) }
     single { DeleteTransactionUseCase(get()) }
-    single { GetDashboardStatsUseCase(get(), get()) }
+    single { GetDashboardStatsUseCase(get(), get<EncryptedPrefs>().selectedCurrencyFlow, get<EncryptedPrefs>().exchangeRateFlow) }
     
     single { GetHoldingsUseCase(get()) }
     single { AddHoldingUseCase(get()) }

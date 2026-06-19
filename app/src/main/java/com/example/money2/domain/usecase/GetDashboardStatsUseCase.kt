@@ -13,13 +13,14 @@ data class DashboardStats(
 
 class GetDashboardStatsUseCase(
     private val repository: HoldingRepository,
-    private val prefs: EncryptedPrefs
+    private val selectedCurrencyFlow: Flow<String>,
+    private val exchangeRateFlow: Flow<Float>
 ) {
     operator fun invoke(): Flow<DashboardStats> {
         return combine(
             repository.getAllHoldings(),
-            prefs.selectedCurrencyFlow,
-            prefs.exchangeRateFlow
+            selectedCurrencyFlow,
+            exchangeRateFlow
         ) { holdings, targetCurrency, exchangeRate ->
             var totalValue = 0.0
             var todayPnl = 0.0

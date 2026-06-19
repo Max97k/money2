@@ -37,12 +37,22 @@ class GetDashboardStatsUseCaseTest {
             assetType: AssetType,
             dateMillis: Long
         ) {}
+
+        override suspend fun updateTransaction(
+            id: Long,
+            type: String,
+            quantity: Double,
+            price: Double,
+            dateMillis: Long
+        ) {}
+
+        override suspend fun deleteTransaction(id: Long) {}
     }
 
     @Test
     fun `invoke with empty holdings returns zero stats`() = runTest {
         val repository = FakeHoldingRepository(emptyList())
-        val useCase = GetDashboardStatsUseCase(repository)
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("USD"), flowOf(1.0f))
 
         val stats = useCase().first()
 
@@ -63,7 +73,7 @@ class GetDashboardStatsUseCaseTest {
             assetType = AssetType.STOCK
         )
         val repository = FakeHoldingRepository(listOf(holding))
-        val useCase = GetDashboardStatsUseCase(repository)
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("USD"), flowOf(1.0f))
 
         val stats = useCase().first()
 
@@ -96,7 +106,7 @@ class GetDashboardStatsUseCaseTest {
             assetType = AssetType.CRYPTO
         )
         val repository = FakeHoldingRepository(listOf(holding1, holding2))
-        val useCase = GetDashboardStatsUseCase(repository)
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("USD"), flowOf(1.0f))
 
         val stats = useCase().first()
 

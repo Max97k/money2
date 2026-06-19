@@ -141,4 +141,14 @@ class FakeHoldingRepository : HoldingRepository {
     ) {
         // No op for this test
     }
+
+    override suspend fun updateTransaction(
+        id: Long,
+        type: String,
+        quantity: Double,
+        price: Double,
+        dateMillis: Long
+    ) {}
+
+    override suspend fun deleteTransaction(id: Long) {}
 }
