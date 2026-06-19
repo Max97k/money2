@@ -3,7 +3,6 @@ package com.example.money2.data.local
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import android.content.Context
 import com.example.money2.data.local.dao.HoldingDao
 import com.example.money2.data.local.dao.TransactionDao
 import com.example.money2.data.local.entity.HoldingEntity
