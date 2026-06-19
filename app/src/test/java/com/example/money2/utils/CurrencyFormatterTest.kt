@@ -40,4 +40,26 @@ class CurrencyFormatterTest {
 
         assertEquals("$ 100.00", result)
     }
+
+    @Test
+    fun format_zeroAmount_returnsZeroFormatted() {
+        val amount = 0.0
+        val exchangeRate = 30.5f
+        val resultTWD = CurrencyFormatter.format(amount, "TWD", exchangeRate)
+        val resultUSD = CurrencyFormatter.format(amount, "USD", exchangeRate)
+
+        assertEquals("NT$ 0", resultTWD)
+        assertEquals("$ 0.00", resultUSD)
+    }
+
+    @Test
+    fun format_negativeAmount_returnsNegativeFormatted() {
+        val amount = -50.0
+        val exchangeRate = 30.0f
+        val resultTWD = CurrencyFormatter.format(amount, "TWD", exchangeRate)
+        val resultUSD = CurrencyFormatter.format(amount, "USD", exchangeRate)
+
+        assertEquals("NT$ -1500", resultTWD)
+        assertEquals("$ -50.00", resultUSD)
+    }
 }
