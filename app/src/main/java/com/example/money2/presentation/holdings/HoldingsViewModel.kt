@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 class HoldingsViewModel(
@@ -69,13 +71,15 @@ class HoldingsViewModel(
         viewModelScope.launch {
             _isRefreshing.value = true
             val currentHoldings = holdings.value
-            currentHoldings.forEach { holding ->
-                val result = marketRepository.getLatestPrice(holding.symbol)
-                result.onSuccess { price ->
-                    val updatedHolding = holding.copy(currentPrice = price)
-                    holdingRepository.updateHolding(updatedHolding)
+            currentHoldings.map { holding ->
+                async {
+                    val result = marketRepository.getLatestPrice(holding.symbol)
+                    result.onSuccess { price ->
+                        val updatedHolding = holding.copy(currentPrice = price)
+                        holdingRepository.updateHolding(updatedHolding)
+                    }
                 }
-            }
+            }.awaitAll()
             _isRefreshing.value = false
         }
     }
