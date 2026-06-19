@@ -1,70 +1,93 @@
-# Money2 - Investment Portfolio Manager
+<div align="center">
 
-Money2 is a fast, smooth, and privacy-focused local investment portfolio management application for Android. It focuses on tracking stocks and ETFs with a seamless user experience, inspired by Google Finance.
+# Money2
 
-## 📚 Documentation
+**A modern, privacy-first, and high-performance investment portfolio manager for Android.**
 
-- [📝 Implementation Plan](Implementation_Plan.md) - Architecture, scope, and development phases.
-- [🛡️ Privacy Policy](PRIVACY.md) - Details on our local-first, privacy-focused approach.
-- [🤝 Contributing](CONTRIBUTING.md) - Guidelines for submitting issues and pull requests.
-- [⚖️ License](LICENSE) - MIT License details.
-- [🔖 Third-Party Notices](THIRD_PARTY_NOTICES.md) - Acknowledgments and open-source licenses.
-## Features
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Android Compose](https://img.shields.io/badge/Jetpack_Compose-Material_3-green.svg)](https://developer.android.com/jetpack/compose)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-- **Privacy-First**: No backend server. All your data, including API keys, is stored locally and securely using Android's `EncryptedSharedPreferences` and `Room Database`.
-- **High Performance**: Market prices are fetched in parallel via Coroutines for lightning-fast portfolio updates.
-- **Secure by Design**: Strict security practices, including disabled HTTP logging in production and secure local proxy secret management.
-- **Dashboard**: View your total value, day's gain, total gain, and a performance chart of your investments.
-- **Holdings**: A complete list of your investments, showing symbols, current price, daily change, quantity, total value, and return rate.
-- **Transactions**: Quick and smooth transaction entry using a global FAB and Bottom Sheet.
-- **Proxy API Integration**: Uses a Cloudflare Worker proxy for Finnhub to fetch real-time US stock quotes securely without needing client-side API keys.
+[English](README.md) | [繁體中文](README_zh.md)
 
-## Tech Stack
+</div>
 
-This project is built using modern Android development best practices (Clean Architecture):
+---
 
-- **UI Framework**: Jetpack Compose
-- **Design System**: Material Design 3 (Dynamic Color)
-- **Dependency Injection**: Koin
-- **Navigation**: Compose Type-Safe Navigation
-- **Concurrency**: Kotlin Coroutines + Flow
-- **Local Database**: Room
-- **Networking**: Retrofit + OkHttp
-- **Security**: EncryptedSharedPreferences
+Money2 is an open-source Android application designed to provide a seamless, performant, and completely secure experience for tracking your stock and ETF investments. Inspired by top-tier financial apps, Money2 is built with modern Android architecture and a strict local-first philosophy.
 
-## Getting Started
+## ✨ Why Money2?
+
+* **Absolute Privacy**: Zero backend servers. Zero cloud sync. All of your financial data and API keys are stored locally on your device, secured by Android's Hardware-Backed Keystore via `EncryptedSharedPreferences`.
+* **Lightning Fast**: Built natively with Jetpack Compose and Kotlin Coroutines. Real-time market data is fetched entirely in parallel.
+* **Modern UI/UX**: Adheres to Material Design 3 guidelines with Dynamic Color support, offering a beautifully fluid native Android experience.
+* **Seamless Multi-Currency**: Automatically handles cross-border portfolios (e.g., USD and TWD) with real-time exchange rate calculations.
+
+## 🛠 Tech Stack & Architecture
+
+Money2 follows the **Clean Architecture** principles, strictly separating concerns into Data, Domain, and Presentation layers.
+
+* **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose)
+* **Architecture**: MVI (Model-View-Intent) & Clean Architecture
+* **Dependency Injection**: [Koin](https://insert-koin.io/)
+* **Concurrency**: Kotlin Coroutines & Flow
+* **Local Database**: [Room](https://developer.android.com/training/data-storage/room)
+* **Networking**: Retrofit2 + OkHttp3
+* **Security**: Jetpack Security Crypto (`EncryptedSharedPreferences`)
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- Android Studio
-- JDK 17
-- Android SDK (API 37 support)
+* [Android Studio Koala](https://developer.android.com/studio) (or newer)
+* JDK 17
+* Android SDK (Min API 26 / Target API 37)
 
 ### Installation
-
 1. Clone the repository:
    ```bash
    git clone https://github.com/Max97k/money2.git
+   cd money2
    ```
 2. Open the project in Android Studio.
-3. Build and run the app on an emulator or physical device running Android 8.0 (API 26) or higher.
+3. Configure the local proxy secret (if required by your custom worker). Add the following line to your `local.properties` file:
+   ```properties
+   PROXY_SECRET=your_secret_here
+   ```
+4. Build and deploy the application to your emulator or physical Android device.
 
-### Versioning
+## 🔒 Security Model
 
-We use [Semantic Versioning](http://semver.org/) for versioning. For the versions available, see the tags on this repository.
+We take data protection seriously. 
+* **No Telemetry**: We do not include any third-party tracking or analytics SDKs.
+* **Secret Management**: All sensitive API keys are kept strictly within `local.properties` and are injected securely at compile time via `BuildConfig`.
+* **Data Encryption**: All local preferences are encrypted.
 
-## Contributing
+Please review our [Privacy Policy](PRIVACY.md) for comprehensive details.
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+## 📖 Documentation
 
-## Privacy
+Dive deeper into our architecture and guidelines:
+- [📝 Implementation Plan](Implementation_Plan.md) - Core architecture and development phases.
+- [🤝 Contributing Guidelines](CONTRIBUTING.md) - How to submit issues and PRs.
+- [🔖 Third-Party Notices](THIRD_PARTY_NOTICES.md) - Acknowledgments.
 
-Money2 is designed with a **Privacy-First** approach. For more details, please review our [Privacy Policy](PRIVACY.md).
+## 🤝 Contributing
 
-## Acknowledgments
+We welcome contributions from the community! Whether it's a bug report, a new feature proposal, or a code refactor:
+1. Fork the project.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
-This app is built with amazing open-source technologies. See [Third-Party Notices](THIRD_PARTY_NOTICES.md) for the full list of libraries and their licenses.
+Please ensure your PR adheres to our [Code of Conduct](CONTRIBUTING.md).
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+<div align="center">
+  <sub>Built with ❤️ for the open-source community.</sub>
+</div>
