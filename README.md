@@ -50,6 +50,14 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
+## Privacy
+
+Money2 is designed with a **Privacy-First** approach. For more details, please review our [Privacy Policy](PRIVACY.md).
+
+## Acknowledgments
+
+This app is built with amazing open-source technologies. See [Third-Party Notices](THIRD_PARTY_NOTICES.md) for the full list of libraries and their licenses.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
