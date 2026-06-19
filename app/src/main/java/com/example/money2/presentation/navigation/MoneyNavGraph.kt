@@ -5,7 +5,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.money2.presentation.dashboard.DashboardScreen
-import com.example.money2.presentation.holdings.AddHoldingDialog
 import com.example.money2.presentation.holdings.HoldingsScreen
 import com.example.money2.presentation.holdings.detail.HoldingDetailScreen
 import com.example.money2.presentation.settings.SettingsScreen
