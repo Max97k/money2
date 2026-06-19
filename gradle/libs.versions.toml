@@ -26,7 +26,7 @@ okhttp = "5.4.0"
 # Kotlinx Serialization & Coroutines
 kotlinxSerializationJson = "1.11.0"
 kotlinxCoroutinesAndroid = "1.11.0"
-kotlinxCoroutinesTest = "1.10.2"
+kotlinxCoroutinesTest = "1.11.0"
 
 # Security
 securityCrypto = "1.1.0"
