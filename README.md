@@ -5,6 +5,8 @@ Money2 is a fast, smooth, and privacy-focused local investment portfolio managem
 ## Features
 
 - **Privacy-First**: No backend server. All your data, including API keys, is stored locally and securely using Android's `EncryptedSharedPreferences` and `Room Database`.
+- **High Performance**: Market prices are fetched in parallel via Coroutines for lightning-fast portfolio updates.
+- **Secure by Design**: Strict security practices, including disabled HTTP logging in production and secure local proxy secret management.
 - **Dashboard**: View your total value, day's gain, total gain, and a performance chart of your investments.
 - **Holdings**: A complete list of your investments, showing symbols, current price, daily change, quantity, total value, and return rate.
 - **Transactions**: Quick and smooth transaction entry using a global FAB and Bottom Sheet.

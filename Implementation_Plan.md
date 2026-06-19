@@ -42,8 +42,8 @@
 ## 5. 測試與品質保證 (Testing Strategy)
 * **單元測試 (Unit Tests)**：針對 Domain Layer (核心業務邏輯) 撰寫完整的 JUnit 測試，確保 `AssetCalculationUseCase` (資產計算) 與 `ExchangeRateUseCase` (匯率換算) 精準無誤。
 
-## 6. 預計執行階段 (Execution Phases)
-* **Phase 1: 基礎建設 (Infrastructure)** - 設定 Koin, Room, Retrofit, Kotlinx Serialization 等依賴與 Gradle 版本目錄。
-* **Phase 2: 資料與領域層 (Data & Domain)** - 設計 Room 資料表，實作 API 串接與加密儲存，撰寫 UseCases 與測試。
-* **Phase 3: UI 與使用者體驗 (Presentation & UX)** - 實作 M3 主題與 Type-Safe 導航，開發 Dashboard, Holdings, Transactions 等 Compose 頁面。
-* **Phase 4: 整合與優化 (Integration & Polish)** - ViewModel 狀態串接、效能優化與最終手動測試。
+## 6. 執行階段狀態 (Execution Phases Status)
+* [x] **Phase 1: 基礎建設 (Infrastructure)** - 設定 Koin, Room, Retrofit, Kotlinx Serialization 等依賴與 Gradle 版本目錄。
+* [x] **Phase 2: 資料與領域層 (Data & Domain)** - 設計 Room 資料表，實作 API 串接與加密儲存，撰寫 UseCases 與單元測試。
+* [x] **Phase 3: UI 與使用者體驗 (Presentation & UX)** - 實作 M3 主題與 Type-Safe 導航，開發 Dashboard, Holdings, Transactions 等 Compose 頁面。
+* [x] **Phase 4: 整合與優化 (Integration & Polish)** - ViewModel 狀態串接、效能優化 (非同步並行拉取報價)、安全性升級 (移除硬編碼密鑰、關閉正式環境 HTTP 敏感日誌) 與最終測試 (DashboardStatsUseCase)。
