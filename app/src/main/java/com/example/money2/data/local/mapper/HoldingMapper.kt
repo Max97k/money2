@@ -9,24 +9,6 @@ import com.example.money2.domain.model.HoldingTransaction
 import com.example.money2.domain.model.HoldingTransactionType
 
 fun HoldingWithTransactions.toDomain(): Holding {
-    var totalQuantity = 0.0
-    var totalCost = 0.0
-    for (t in transactions) {
-        if (t.type == "BUY") {
-            totalQuantity += t.quantity
-            totalCost += t.quantity * t.price
-        } else if (t.type == "SELL") {
-            totalQuantity -= t.quantity
-            // simplistic avg cost approach: avg cost does not change on sell, 
-            // but we need to subtract the cost of sold shares from totalCost.
-            // Alternatively, track avgCost and apply to sells
-            // A simpler way for this project is recalculating avg cost
-            // Wait, standard way: 
-            // if BUY: totalCost += q * p, totalQ += q, avg = totalCost / totalQ
-            // if SELL: totalQ -= q, totalCost -= q * avg
-        }
-    }
-    // Let's do it properly:
     var q = 0.0
     var c = 0.0
     for (t in transactions.sortedBy { it.dateMillis }) {
