@@ -50,16 +50,14 @@ val prefsModule = module {
 
 val networkModule = module {
     single {
-        val logging = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
+        val builder = OkHttpClient.Builder()
+        if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
             }
+            builder.addInterceptor(logging)
         }
-        OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
+        builder.build()
     }
     
     single {

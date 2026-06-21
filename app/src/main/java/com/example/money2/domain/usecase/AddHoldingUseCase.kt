@@ -8,7 +8,7 @@ class AddHoldingUseCase(private val repository: HoldingRepository) {
         if (holding.symbol.isBlank()) {
             throw IllegalArgumentException("Symbol cannot be blank")
         }
-        if (holding.totalQuantity <= 0) {
+        if (holding.totalQuantity.isNaN() || holding.totalQuantity <= 0) {
             throw IllegalArgumentException("Quantity must be greater than zero")
         }
         // In reality we should be using addTransaction, but if we're just adding a holding, we can use insertHolding directly or delegate to addTransaction.

@@ -35,7 +35,7 @@ jobs:
 
       # 3. 設定 Gradle 快取
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -124,3 +124,4 @@ jobs:
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           tracks: internal
           status: completed
+          whatsNewDirectory: play/release-notes

@@ -43,6 +43,24 @@ class AddHoldingUseCaseTest {
     }
 
     @Test
+    fun `invoke with empty symbol throws exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "",
+            name = "Test",
+            totalQuantity = 10.0,
+            avgCost = 100.0,
+            assetType = AssetType.STOCK
+        )
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Symbol cannot be blank", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
     fun `invoke with zero quantity throws exception`() = runBlocking {
         val holding = Holding(
             symbol = "AAPL",
@@ -79,6 +97,44 @@ class AddHoldingUseCaseTest {
     }
 
     @Test
+    fun `invoke with NaN quantity throws exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "AAPL",
+            name = "Apple Inc.",
+            totalQuantity = Double.NaN,
+            avgCost = 100.0,
+            assetType = AssetType.STOCK
+        )
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Quantity must be greater than zero", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
+    fun `invoke when repository throws exception propagates exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "AAPL",
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            assetType = AssetType.STOCK
+        )
+
+        fakeRepository.shouldThrowOnInsert = true
+
+        val exception = assertThrows(IllegalStateException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Repository insert failed", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
     fun `invoke with valid holding inserts holding`() = runBlocking {
         val holding = Holding(
             symbol = "AAPL",
@@ -98,6 +154,7 @@ class AddHoldingUseCaseTest {
 class FakeHoldingRepository : HoldingRepository {
 
     val insertedHoldings = mutableListOf<Holding>()
+    var shouldThrowOnInsert = false
 
     override fun getAllHoldings(): Flow<List<Holding>> {
         return flowOf(insertedHoldings)
@@ -112,6 +169,9 @@ class FakeHoldingRepository : HoldingRepository {
     }
 
     override suspend fun insertHolding(holding: Holding) {
+        if (shouldThrowOnInsert) {
+            throw IllegalStateException("Repository insert failed")
+        }
         insertedHoldings.add(holding)
     }
 

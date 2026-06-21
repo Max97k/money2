@@ -1,16 +1,11 @@
-# Project-Scoped Rules
+# Project-Scoped Rules for money2
 
-## Core Android Development Rules
-請記住這條核心開發規則，並套用於之後所有的 Android 任務：
-
-1. 框架與技術：一律使用 Jetpack Compose，絕對不使用舊版 XML 佈局。
-2. 設計美學 (Material You)：嚴格遵循 Material Design 3 (m3.material.io) 的視覺哲學。
-3. 視覺實作標準：
-   - 啟用動態色彩 (Dynamic Color)。
-   - 使用色調高度 (Tonal Elevation) 來區分 UI 層級，避免使用過時的重度陰影。
-   - 保持介面簡潔、充裕留白，元件使用 M3 規範的圓角形狀。
-   - UI 元件請直接調用 Compose Material 3 函式庫中的組件 (如 Card, Scaffold, TopAppBar)。
-
-遇到任何設計決策，請優先對齊 Google 官方的 M3 美學標準。
-
-4. 目標 SDK 與 API：接下來的開發全面瞄準 Android 17，實作時請盡量優先採用 Android 17 (API 37) 官方所推薦的做法與架構。
+## Automated Google Play Release Notes (What's New)
+When the user asks to "prepare a release", "create a new release", or "tag a new version":
+1. Do NOT immediately tag and push.
+2. First, analyze the recent Git commits (`git log` from the last tag to `HEAD`).
+3. Summarize the technical commits into a highly polished, user-friendly "What's New" release note in Traditional Chinese (zh-TW). It should be suitable for general users to read on the Google Play Store.
+4. Save this release note to the file: `play/release-notes/whatsnew-zh-TW` (overwrite it if it exists). Note: The filename must be exactly `whatsnew-zh-TW` without any file extension.
+5. Create the directory `play/release-notes/` if it does not exist.
+6. Commit the `play/release-notes/whatsnew-zh-TW` file to the repository.
+7. Only after the commit is successful, create the Git tag (e.g., `v1.2.0`) and push both the commit and the tag to GitHub to trigger the release workflow.
