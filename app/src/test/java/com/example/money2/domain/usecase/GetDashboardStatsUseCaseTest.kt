@@ -5,16 +5,24 @@ import com.example.money2.domain.model.Holding
 import com.example.money2.domain.model.HoldingTransaction
 import com.example.money2.domain.repository.HoldingRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GetDashboardStatsUseCaseTest {
 
-    private class FakeHoldingRepository(private val holdings: List<Holding>) : HoldingRepository {
-        override fun getAllHoldings(): Flow<List<Holding>> = flowOf(holdings)
+    private class FakeHoldingRepository(private val holdingsFlow: Flow<List<Holding>>) : HoldingRepository {
+        constructor(holdings: List<Holding>) : this(flowOf(holdings))
+
+        override fun getAllHoldings(): Flow<List<Holding>> = holdingsFlow
 
         override fun getHoldingsByType(type: AssetType): Flow<List<Holding>> = flowOf(emptyList())
 
@@ -202,6 +210,103 @@ class GetDashboardStatsUseCaseTest {
         assertEquals(20000.0, stats.todayPnl, 0.0)
         // Total PnL = (600.0 - 500.0) * 1000.0 = 100.0 * 1000.0 = 100000.0
         assertEquals(100000.0, stats.totalPnl, 0.0)
+    }
+
+    @Test
+    fun `invoke reflects selected currency and exchange rate updates`() = runTest {
+        val holding = Holding(
+            symbol = "AAPL", // Native: USD
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            currentPrice = 160.0,
+            previousClosePrice = 155.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(holding))
+
+        val currencyFlow = MutableStateFlow("USD")
+        val exchangeRateFlow = MutableStateFlow(1.0f)
+
+        val useCase = GetDashboardStatsUseCase(repository, currencyFlow, exchangeRateFlow)
+
+        val results = mutableListOf<DashboardStats>()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            useCase().toList(results)
+        }
+
+        // Initial state
+        assertEquals(1600.0, results.last().totalValue, 0.0)
+
+        // Update currency and exchange rate
+        currencyFlow.value = "TWD"
+        exchangeRateFlow.value = 30.0f
+
+        // Should emit new stats reflecting the new currency and rate
+        assertEquals(48000.0, results.last().totalValue, 0.0)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `invoke reflects holdings updates`() = runTest {
+        val holding = Holding(
+            symbol = "AAPL", // Native: USD
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            currentPrice = 160.0,
+            previousClosePrice = 155.0,
+            assetType = AssetType.STOCK
+        )
+
+        val holdingsFlow = MutableStateFlow(listOf(holding))
+        val repository = FakeHoldingRepository(holdingsFlow)
+
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("USD"), flowOf(1.0f))
+
+        val results = mutableListOf<DashboardStats>()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            useCase().toList(results)
+        }
+
+        // Initial state
+        assertEquals(1600.0, results.last().totalValue, 0.0)
+
+        // Update holdings
+        val holding2 = holding.copy(currentPrice = 170.0)
+        holdingsFlow.value = listOf(holding2)
+
+        // Should emit new stats reflecting the updated holding
+        assertEquals(1700.0, results.last().totalValue, 0.0)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `invoke with unknown target currency applies no conversion`() = runTest {
+        val holding = Holding(
+            symbol = "AAPL", // Native currency: USD
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = 150.0,
+            currentPrice = 160.0,
+            previousClosePrice = 155.0,
+            assetType = AssetType.STOCK
+        )
+        val repository = FakeHoldingRepository(listOf(holding))
+        // Target: EUR, which is not USD or TWD. Exchange rate should be ignored.
+        val useCase = GetDashboardStatsUseCase(repository, flowOf("EUR"), flowOf(0.9f))
+
+        val stats = useCase().first()
+
+        // No conversion applied since target is neither TWD nor USD from the native side
+        // Total Value = 10.0 * 160.0 = 1600.0
+        assertEquals(1600.0, stats.totalValue, 0.0)
+        // Today PnL = (160.0 - 155.0) * 10.0 = 50.0
+        assertEquals(50.0, stats.todayPnl, 0.0)
+        // Total PnL = (160.0 - 150.0) * 10.0 = 100.0
+        assertEquals(100.0, stats.totalPnl, 0.0)
     }
 
     @Test
