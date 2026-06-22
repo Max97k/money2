@@ -43,6 +43,60 @@ class AddHoldingUseCaseTest {
     }
 
     @Test
+    fun `invoke with blank name throws exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "AAPL",
+            name = "   ",
+            totalQuantity = 10.0,
+            avgCost = 100.0,
+            assetType = AssetType.STOCK
+        )
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Name cannot be blank", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
+    fun `invoke with negative avgCost throws exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "AAPL",
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = -5.0,
+            assetType = AssetType.STOCK
+        )
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Average cost cannot be negative", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
+    fun `invoke with NaN avgCost throws exception`() = runBlocking {
+        val holding = Holding(
+            symbol = "AAPL",
+            name = "Apple Inc.",
+            totalQuantity = 10.0,
+            avgCost = Double.NaN,
+            assetType = AssetType.STOCK
+        )
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { useCase(holding) }
+        }
+
+        assertEquals("Average cost cannot be negative", exception.message)
+        assertTrue(fakeRepository.insertedHoldings.isEmpty())
+    }
+
+    @Test
     fun `invoke with empty symbol throws exception`() = runBlocking {
         val holding = Holding(
             symbol = "",
@@ -144,7 +198,7 @@ class AddHoldingUseCaseTest {
             assetType = AssetType.STOCK
         )
 
-        useCase(holding)
+        runBlocking { useCase(holding) }
 
         assertEquals(1, fakeRepository.insertedHoldings.size)
         assertEquals(holding, fakeRepository.insertedHoldings.first())
