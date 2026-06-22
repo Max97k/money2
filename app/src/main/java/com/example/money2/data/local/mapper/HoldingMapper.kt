@@ -23,49 +23,27 @@ fun HoldingWithTransactions.toDomain(): Holding {
         lastDate = d
     }
 
-    val mappedTransactions = ArrayList<HoldingTransaction>(transactions.size)
+    val iterableTransactions = if (isSorted) transactions else transactions.sortedBy { it.dateMillis }
+    val mappedTransactions = ArrayList<HoldingTransaction>(iterableTransactions.size)
 
-    if (isSorted) {
-        for (i in 0 until transactions.size) {
-            val t = transactions[i]
-            if (t.type == "BUY") {
-                q += t.quantity
-                c += t.quantity * t.price
-            } else if (t.type == "SELL") {
-                val avg = if (q > 0) c / q else 0.0
-                q -= t.quantity
-                c -= t.quantity * avg
-            }
-            mappedTransactions.add(HoldingTransaction(
-                id = t.id,
-                symbol = t.symbol,
-                type = HoldingTransactionType.valueOf(t.type),
-                quantity = t.quantity,
-                price = t.price,
-                dateMillis = t.dateMillis
-            ))
+    for (i in 0 until iterableTransactions.size) {
+        val t = iterableTransactions[i]
+        if (t.type == "BUY") {
+            q += t.quantity
+            c += t.quantity * t.price
+        } else if (t.type == "SELL") {
+            val avg = if (q > 0) c / q else 0.0
+            q -= t.quantity
+            c -= t.quantity * avg
         }
-    } else {
-        val sortedEntities = transactions.sortedBy { it.dateMillis }
-        for (i in 0 until sortedEntities.size) {
-            val t = sortedEntities[i]
-            if (t.type == "BUY") {
-                q += t.quantity
-                c += t.quantity * t.price
-            } else if (t.type == "SELL") {
-                val avg = if (q > 0) c / q else 0.0
-                q -= t.quantity
-                c -= t.quantity * avg
-            }
-            mappedTransactions.add(HoldingTransaction(
-                id = t.id,
-                symbol = t.symbol,
-                type = HoldingTransactionType.valueOf(t.type),
-                quantity = t.quantity,
-                price = t.price,
-                dateMillis = t.dateMillis
-            ))
-        }
+        mappedTransactions.add(HoldingTransaction(
+            id = t.id,
+            symbol = t.symbol,
+            type = HoldingTransactionType.valueOf(t.type),
+            quantity = t.quantity,
+            price = t.price,
+            dateMillis = t.dateMillis
+        ))
     }
 
     val avgCost = if (q > 0) c / q else 0.0
