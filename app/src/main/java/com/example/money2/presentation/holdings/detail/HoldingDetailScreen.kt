@@ -159,7 +159,7 @@ fun HoldingDetailScreen(
 fun TransactionLotItem(tx: HoldingTransaction, onEdit: () -> Unit, onDelete: () -> Unit) {
     val isBuy = tx.type.name == "BUY"
     val color = if (isBuy) Color(0xFF4CAF50) else Color(0xFFF44336)
-    val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+    val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.US)
     val currencyInfo = LocalCurrencyInfo.current
 
     Card(
@@ -228,7 +228,7 @@ fun AddTransactionDialog(
     }
 
     val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-    val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
+    val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.US)
     val dateString = formatter.format(Date(selectedDate))
 
     AlertDialog(
