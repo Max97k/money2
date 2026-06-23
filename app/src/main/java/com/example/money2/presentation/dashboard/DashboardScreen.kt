@@ -7,8 +7,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitFirstDown
+import kotlin.math.roundToInt
+import java.text.SimpleDateFormat
+import java.util.Date
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.layout.offset
+import com.example.money2.utils.LocalCurrencyInfo
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Brush
@@ -279,8 +295,44 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
     if (values.size < 2) return
     val lineColor = MaterialTheme.colorScheme.primary
     val gradientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    val currencyInfo = LocalCurrencyInfo.current
     
-    Canvas(modifier = modifier) {
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+    var chartWidth by remember { mutableStateOf(0f) }
+    val dateFormat = remember { SimpleDateFormat("yyyy/MM/dd", Locale.US) }
+    
+    Box(modifier = modifier) {
+    Canvas(modifier = Modifier.fillMaxSize()
+        .onGloballyPositioned { chartWidth = it.size.width.toFloat() }
+        .pointerInput(values) {
+            awaitPointerEventScope {
+                while (true) {
+                    val down = awaitFirstDown()
+                    val pointSpacing = size.width.toFloat() / (values.size - 1).coerceAtLeast(1)
+                    selectedIndex = (down.position.x / pointSpacing).roundToInt().coerceIn(0, values.lastIndex)
+
+                    var isDragging = true
+                    while (isDragging) {
+                        val event = awaitPointerEvent()
+                        val changes = event.changes
+                        
+                        // Handle pointer movements
+                        changes.forEach { change ->
+                            if (change.pressed) {
+                                selectedIndex = (change.position.x / pointSpacing).roundToInt().coerceIn(0, values.lastIndex)
+                            }
+                        }
+                        
+                        // Break if all pointers are released
+                        if (!changes.any { it.pressed }) {
+                            isDragging = false
+                        }
+                    }
+                    selectedIndex = null
+                }
+            }
+        }
+    ) {
         val maxVal = values.maxOrNull() ?: 0f
         val minVal = values.minOrNull() ?: 0f
         val range = (maxVal - minVal).coerceAtLeast(0.1f)
@@ -320,5 +372,76 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
             path = fillPath,
             brush = Brush.verticalGradient(listOf(gradientColor, Color.Transparent))
         )
+        
+        selectedIndex?.let { index ->
+            val x = index * pointSpacing
+            val y = height - ((values[index] - minVal) / range) * height * 0.8f - height * 0.1f
+            
+            // Draw crosshair
+            drawLine(
+                color = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.5f),
+                start = androidx.compose.ui.geometry.Offset(x, 0f),
+                end = androidx.compose.ui.geometry.Offset(x, height),
+                strokeWidth = 1.dp.toPx()
+            )
+            
+            // Draw focus dot
+            drawCircle(
+                color = lineColor,
+                radius = 4.dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(x, y)
+            )
+        }
+    }
+    
+        selectedIndex?.let { index ->
+            val pointSpacing = if (values.size > 1) chartWidth / (values.size - 1) else 0f
+            val x = index * pointSpacing
+            val tooltipWidth = 140.dp
+            
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .offset { 
+                            val tooltipWidthPx = tooltipWidth.roundToPx()
+                            val minX = 0
+                            val maxX = (chartWidth - tooltipWidthPx).toInt().coerceAtLeast(0)
+                            val preferredX = x.toInt() - tooltipWidthPx / 2
+                            IntOffset(preferredX.coerceIn(minX, maxX), 0)
+                        }
+                        .width(tooltipWidth)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shadowElevation = 4.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = dateFormat.format(Date(state.assetPoints[index].timestamp)),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = CurrencyFormatter.format(
+                                amount = values[index].toDouble(),
+                                targetCurrency = currencyInfo.currency,
+                                exchangeRate = currencyInfo.exchangeRate
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                }
+            }
+        }
     }
 }
