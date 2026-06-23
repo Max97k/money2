@@ -291,10 +291,13 @@ private fun formatCurrency(amount: Double): String {
 
 @Composable
 fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
-    val values = state.assetPoints.map { it.value }
+    val values = state.assetPoints.map { it.normalizedValue }
     if (values.size < 2) return
+    val bValues = state.benchmarkPoints?.map { it.normalizedValue }
+    
     val lineColor = MaterialTheme.colorScheme.primary
     val gradientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    val benchmarkColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
     val currencyInfo = LocalCurrencyInfo.current
     
     var selectedIndex by remember { mutableStateOf<Int?>(null) }
@@ -304,7 +307,7 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
     Canvas(modifier = Modifier.fillMaxSize()
         .onGloballyPositioned { chartWidth = it.size.width.toFloat() }
-        .pointerInput(values) {
+        .pointerInput(state.assetPoints) {
             awaitPointerEventScope {
                 while (true) {
                     val down = awaitFirstDown()
@@ -333,9 +336,9 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
             }
         }
     ) {
-        val maxVal = values.maxOrNull() ?: 0f
-        val minVal = values.minOrNull() ?: 0f
-        val range = (maxVal - minVal).coerceAtLeast(0.1f)
+        val maxVal = maxOf(values.maxOrNull() ?: 0f, bValues?.maxOrNull() ?: 0f)
+        val minVal = minOf(values.minOrNull() ?: 0f, bValues?.minOrNull() ?: 0f)
+        val range = (maxVal - minVal).coerceAtLeast(0.01f)
         
         val width = size.width
         val height = size.height
@@ -373,6 +376,30 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
             brush = Brush.verticalGradient(listOf(gradientColor, Color.Transparent))
         )
         
+        if (bValues != null && bValues.size == values.size) {
+            val bPath = Path()
+            for (i in bValues.indices) {
+                val x = i * pointSpacing
+                val y = height - ((bValues[i] - minVal) / range) * height * 0.8f - height * 0.1f
+                if (i == 0) {
+                    bPath.moveTo(x, y)
+                } else {
+                    val prevX = (i - 1) * pointSpacing
+                    val prevY = height - ((bValues[i - 1] - minVal) / range) * height * 0.8f - height * 0.1f
+                    val cx = (prevX + x) / 2
+                    bPath.cubicTo(cx, prevY, cx, y, x, y)
+                }
+            }
+            drawPath(
+                path = bPath,
+                color = benchmarkColor,
+                style = Stroke(
+                    width = 2.dp.toPx(),
+                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                )
+            )
+        }
+        
         selectedIndex?.let { index ->
             val x = index * pointSpacing
             val y = height - ((values[index] - minVal) / range) * height * 0.8f - height * 0.1f
@@ -397,7 +424,7 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
         selectedIndex?.let { index ->
             val pointSpacing = if (values.size > 1) chartWidth / (values.size - 1) else 0f
             val x = index * pointSpacing
-            val tooltipWidth = 140.dp
+            val tooltipWidth = 170.dp
             
             Box(
                 modifier = Modifier.fillMaxWidth()
@@ -430,7 +457,7 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
                         )
                         Text(
                             text = CurrencyFormatter.format(
-                                amount = values[index].toDouble(),
+                                amount = state.assetPoints[index].value.toDouble(),
                                 targetCurrency = currencyInfo.currency,
                                 exchangeRate = currencyInfo.exchangeRate
                             ),
@@ -438,6 +465,26 @@ fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val assetChange = values[index] * 100
+                            Text(
+                                text = String.format(Locale.US, "%+.2f%%", assetChange),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (assetChange >= 0) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (bValues != null) {
+                                val bChange = bValues[index] * 100
+                                Text(
+                                    text = "S&P 500: ${String.format(Locale.US, "%+.2f%%", bChange)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
                 }

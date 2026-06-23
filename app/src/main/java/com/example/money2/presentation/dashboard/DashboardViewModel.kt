@@ -35,6 +35,8 @@ class DashboardViewModel(
     private val marketRepository: MarketRepository,
     private val holdingRepository: HoldingRepository
 ) : ViewModel() {
+    val benchmarkSymbol = "^GSPC"
+
     val stats: StateFlow<DashboardStats?> = getDashboardStatsUseCase()
         .stateIn(
             scope = viewModelScope,
@@ -63,7 +65,7 @@ class DashboardViewModel(
                 Pair(hList, range)
             }.collect { (hList, range) ->
                 val currentCache = historicalDataCache.value
-                val missingKeys = hList.map { HistoryCacheKey(it.symbol, range) }
+                val missingKeys = (hList.map { HistoryCacheKey(it.symbol, range) } + HistoryCacheKey(benchmarkSymbol, range))
                     .filter { !currentCache.containsKey(it) }
                     
                 if (missingKeys.isNotEmpty()) {
@@ -140,12 +142,26 @@ class DashboardViewModel(
         val maxPoints = 100 // Sample 100 points
         
         val points = mutableListOf<ChartPoint>()
+        val bPoints = mutableListOf<ChartPoint>()
+        var baseAssetValue = 0f
+        var baseBenchmarkValue = 0f
         
         for (i in 0..maxPoints) {
             val currentMillis = startMillis + (totalMillis * i / maxPoints.toFloat()).toLong()
             
             var totalValueAtDay = 0f
             
+            val bHistory = historyCache[HistoryCacheKey(benchmarkSymbol, range)]
+            var benchmarkVal = 0.0
+            if (bHistory != null && bHistory.isNotEmpty()) {
+                val closestData = bHistory.lastOrNull { it.first <= currentMillis }
+                if (closestData != null) {
+                    benchmarkVal = closestData.second
+                } else {
+                    benchmarkVal = bHistory.first().second
+                }
+            }
+
             for (h in holdingsList) {
                 var q = 0.0
                 var c = 0.0
@@ -192,9 +208,19 @@ class DashboardViewModel(
                 
                 totalValueAtDay += (q * finalPrice).toFloat()
             }
-            points.add(ChartPoint(timestamp = currentMillis, value = totalValueAtDay))
+            
+            if (i == 0) {
+                baseAssetValue = totalValueAtDay
+                baseBenchmarkValue = benchmarkVal.toFloat()
+            }
+            
+            val normalizedAssetValue = if (baseAssetValue != 0f) (totalValueAtDay / baseAssetValue) - 1.0f else 0f
+            val normalizedBenchmarkValue = if (baseBenchmarkValue != 0f) (benchmarkVal.toFloat() / baseBenchmarkValue) - 1.0f else 0f
+            
+            points.add(ChartPoint(timestamp = currentMillis, value = totalValueAtDay, normalizedValue = normalizedAssetValue))
+            bPoints.add(ChartPoint(timestamp = currentMillis, value = benchmarkVal.toFloat(), normalizedValue = normalizedBenchmarkValue))
         }
-        ChartUiState(selectedRange = range, assetPoints = points)
+        ChartUiState(selectedRange = range, assetPoints = points, benchmarkPoints = bPoints)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
