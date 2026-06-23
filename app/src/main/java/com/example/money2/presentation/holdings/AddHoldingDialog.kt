@@ -121,7 +121,7 @@ fun AddHoldingDialog(
                 )
                 
                 val selectedDate = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                val formatter = java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault())
+                val formatter = java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.US)
                 OutlinedTextField(
                     value = formatter.format(java.util.Date(selectedDate)),
                     onValueChange = {},

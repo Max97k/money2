@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import com.example.money2.domain.repository.HoldingRepository
 
@@ -61,12 +63,14 @@ class DashboardViewModel(
             while(true) {
                 delay(10000)
                 val currentHoldings = holdings.value
-                for (holding in currentHoldings) {
-                    val result = marketRepository.getLatestPrice(holding.symbol)
-                    result.onSuccess { price ->
-                        holdingRepository.updateHolding(holding.copy(currentPrice = price))
+                currentHoldings.map { holding ->
+                    async {
+                        val result = marketRepository.getLatestPrice(holding.symbol)
+                        result.onSuccess { price ->
+                            holdingRepository.updateHolding(holding.copy(currentPrice = price))
+                        }
                     }
-                }
+                }.awaitAll()
                 delay(60000)
             }
         }

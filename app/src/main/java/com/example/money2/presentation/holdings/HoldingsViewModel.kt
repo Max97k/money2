@@ -85,19 +85,16 @@ class HoldingsViewModel(
             _isRefreshing.value = true
             val currentHoldings = holdings.value
 
-            // Fixed N+1 API call by running getLatestPrice concurrently
-            val jobs = currentHoldings.map { holding ->
-                launch {
+            // Fixed N+1 API call by running getLatestPrice concurrently using async/awaitAll
+            currentHoldings.map { holding ->
+                async {
                     val result = marketRepository.getLatestPrice(holding.symbol)
                     result.onSuccess { price ->
                         val updatedHolding = holding.copy(currentPrice = price)
                         holdingRepository.updateHolding(updatedHolding)
                     }
                 }
-            }
-
-            // Wait for all concurrent price updates to finish
-            jobs.forEach { it.join() }
+            }.awaitAll()
 
             _isRefreshing.value = false
         }
