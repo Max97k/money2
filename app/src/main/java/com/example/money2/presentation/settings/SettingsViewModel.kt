@@ -3,7 +3,6 @@ package com.example.money2.presentation.settings
 import androidx.lifecycle.ViewModel
 import com.example.money2.data.local.prefs.EncryptedPrefs
 import kotlinx.coroutines.flow.StateFlow
-
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import com.example.money2.domain.repository.MarketRepository
@@ -12,9 +11,6 @@ class SettingsViewModel(
     private val encryptedPrefs: EncryptedPrefs,
     private val marketRepository: MarketRepository
 ) : ViewModel() {
-
-
-
     val selectedCurrency: StateFlow<String> = encryptedPrefs.selectedCurrencyFlow
     val exchangeRate: StateFlow<Float> = encryptedPrefs.exchangeRateFlow
 
