@@ -3,6 +3,9 @@ package com.example.money2.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.money2.domain.model.Holding
+import com.example.money2.domain.model.TimeRange
+import com.example.money2.domain.model.ChartPoint
+import com.example.money2.domain.model.ChartUiState
 import com.example.money2.domain.usecase.DashboardStats
 import com.example.money2.domain.usecase.GetDashboardStatsUseCase
 import com.example.money2.domain.usecase.GetHoldingsUseCase
@@ -22,6 +25,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import com.example.money2.domain.repository.HoldingRepository
+
+data class HistoryCacheKey(val symbol: String, val range: TimeRange)
 
 class DashboardViewModel(
     getDashboardStatsUseCase: GetDashboardStatsUseCase,
@@ -44,18 +49,48 @@ class DashboardViewModel(
             initialValue = emptyList()
         )
         
-    private val historicalDataCache = MutableStateFlow<Map<String, List<Pair<Long, Double>>>>(emptyMap())
+    val selectedRange = MutableStateFlow(TimeRange.YEAR_1)
+    
+    fun selectTimeRange(range: TimeRange) {
+        selectedRange.value = range
+    }
+        
+    private val historicalDataCache = MutableStateFlow<Map<HistoryCacheKey, List<Pair<Long, Double>>>>(emptyMap())
 
     init {
         viewModelScope.launch {
-            holdings.collect { hList ->
+            combine(holdings, selectedRange) { hList, range ->
+                Pair(hList, range)
+            }.collect { (hList, range) ->
                 val currentCache = historicalDataCache.value
-                val missingSymbols = hList.map { it.symbol }.filter { !currentCache.containsKey(it) }
-                for (symbol in missingSymbols) {
-                    val result = marketRepository.fetchHistoricalPrices(symbol, "2y", "1d")
-                    result.onSuccess { data ->
-                        historicalDataCache.update { it + (symbol to data) }
+                val missingKeys = hList.map { HistoryCacheKey(it.symbol, range) }
+                    .filter { !currentCache.containsKey(it) }
+                    
+                if (missingKeys.isNotEmpty()) {
+                    val apiRange = when (range) {
+                        TimeRange.DAY_1 -> "1d"
+                        TimeRange.DAY_5 -> "5d"
+                        TimeRange.MONTH_1 -> "1mo"
+                        TimeRange.MONTH_6 -> "6mo"
+                        TimeRange.YTD -> "ytd"
+                        TimeRange.YEAR_1 -> "1y"
+                        TimeRange.YEAR_5 -> "5y"
+                        TimeRange.MAX -> "max"
                     }
+                    val apiInterval = when (range) {
+                        TimeRange.DAY_1 -> "5m"
+                        TimeRange.DAY_5 -> "15m"
+                        TimeRange.MONTH_1, TimeRange.MONTH_6, TimeRange.YTD, TimeRange.YEAR_1 -> "1d"
+                        TimeRange.YEAR_5 -> "1wk"
+                        TimeRange.MAX -> "1mo"
+                    }
+                    
+                    missingKeys.map { key ->
+                        async {
+                            val result = marketRepository.fetchHistoricalPrices(key.symbol, apiRange, apiInterval)
+                            result.onSuccess { data -> historicalDataCache.update { it + (key to data) } }
+                        }
+                    }.awaitAll()
                 }
             }
         }
@@ -76,28 +111,38 @@ class DashboardViewModel(
         }
     }
 
-    val trendPoints: StateFlow<List<Float>> = combine(
+    val chartUiState: StateFlow<ChartUiState> = combine(
         getHoldingsUseCase(),
         prefs.selectedCurrencyFlow,
         prefs.exchangeRateFlow,
-        historicalDataCache
-    ) { holdingsList, targetCurrency, exchangeRate, historyCache ->
-        if (holdingsList.isEmpty()) return@combine emptyList()
+        historicalDataCache,
+        selectedRange
+    ) { holdingsList, targetCurrency, exchangeRate, historyCache, range ->
+        if (holdingsList.isEmpty()) return@combine ChartUiState(selectedRange = range)
         
-        // Find earliest transaction
         val earliestTx = holdingsList.flatMap { it.transactions }.minByOrNull { it.dateMillis }
-        if (earliestTx == null) return@combine emptyList()
+        if (earliestTx == null) return@combine ChartUiState(selectedRange = range)
         
-        val startDay = earliestTx.dateMillis / 86400000L
-        val today = System.currentTimeMillis() / 86400000L
-        val totalDays = (today - startDay).toInt().coerceAtLeast(1)
+        val todayMillis = System.currentTimeMillis()
+        val startTimeLimit = when (range) {
+            TimeRange.DAY_1 -> todayMillis - 86400000L
+            TimeRange.DAY_5 -> todayMillis - 5L * 86400000L
+            TimeRange.MONTH_1 -> todayMillis - 30L * 86400000L
+            TimeRange.MONTH_6 -> todayMillis - 180L * 86400000L
+            TimeRange.YTD -> java.util.Calendar.getInstance().apply { set(java.util.Calendar.MONTH, 0); set(java.util.Calendar.DAY_OF_MONTH, 1) }.timeInMillis
+            TimeRange.YEAR_1 -> todayMillis - 365L * 86400000L
+            TimeRange.YEAR_5 -> todayMillis - 5L * 365L * 86400000L
+            TimeRange.MAX -> 0L
+        }
+        
+        val startMillis = maxOf(startTimeLimit, earliestTx.dateMillis)
+        val totalMillis = (todayMillis - startMillis).coerceAtLeast(1)
         val maxPoints = 100 // Sample 100 points
         
-        val points = mutableListOf<Float>()
+        val points = mutableListOf<ChartPoint>()
         
         for (i in 0..maxPoints) {
-            val currentDay = startDay + (totalDays * i / maxPoints.toFloat()).toLong()
-            val currentMillis = currentDay * 86400000L
+            val currentMillis = startMillis + (totalMillis * i / maxPoints.toFloat()).toLong()
             
             var totalValueAtDay = 0f
             
@@ -117,7 +162,7 @@ class DashboardViewModel(
                 }
                 
                 val avgCost = if (q > 0) c / q else 0.0
-                val history = historyCache[h.symbol]
+                val history = historyCache[HistoryCacheKey(h.symbol, range)]
                 
                 var estimatedPrice = avgCost
                 if (history != null && history.isNotEmpty()) {
@@ -130,8 +175,9 @@ class DashboardViewModel(
                         estimatedPrice = history.first().second
                     }
                 } else {
-                    val fraction = if (today > startDay) (currentDay - startDay).toFloat() / totalDays else 1f
-                    estimatedPrice = avgCost + (h.currentPrice - avgCost) * fraction
+                    val fraction = if (todayMillis > earliestTx.dateMillis) (currentMillis - earliestTx.dateMillis).toFloat() / (todayMillis - earliestTx.dateMillis) else 1f
+                    val finalFraction = fraction.coerceIn(0f, 1f)
+                    estimatedPrice = avgCost + (h.currentPrice - avgCost) * finalFraction
                 }
                 
                 val nativeCurrency = if (h.symbol.endsWith(".TW") || h.symbol.endsWith(".TWO")) "TWD" else "USD"
@@ -146,12 +192,12 @@ class DashboardViewModel(
                 
                 totalValueAtDay += (q * finalPrice).toFloat()
             }
-            points.add(totalValueAtDay)
+            points.add(ChartPoint(timestamp = currentMillis, value = totalValueAtDay))
         }
-        points
+        ChartUiState(selectedRange = range, assetPoints = points)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = ChartUiState()
     )
 }

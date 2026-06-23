@@ -19,6 +19,8 @@ import androidx.compose.foundation.Canvas
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.money2.domain.model.Holding
+import com.example.money2.domain.model.ChartUiState
+import com.example.money2.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
 import java.text.NumberFormat
 import java.util.Locale
@@ -41,7 +43,7 @@ fun DashboardScreen(
 ) {
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val holdings by viewModel.holdings.collectAsStateWithLifecycle()
-    val trendPoints by viewModel.trendPoints.collectAsStateWithLifecycle()
+    val chartUiState by viewModel.chartUiState.collectAsStateWithLifecycle()
     val currencyInfo = LocalCurrencyInfo.current
     val spotlightRegistry = LocalSpotlightRegistry.current
 
@@ -107,9 +109,31 @@ fun DashboardScreen(
                     )
                 }
 
-                if (trendPoints.size > 1) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val ranges = listOf(
+                        "1D" to TimeRange.DAY_1, "5D" to TimeRange.DAY_5, 
+                        "1M" to TimeRange.MONTH_1, "6M" to TimeRange.MONTH_6,
+                        "YTD" to TimeRange.YTD, "1Y" to TimeRange.YEAR_1,
+                        "5Y" to TimeRange.YEAR_5, "MAX" to TimeRange.MAX
+                    )
+                    ranges.forEach { (label, range) ->
+                        TextButton(
+                            onClick = { viewModel.selectTimeRange(range) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(label, color = if (chartUiState.selectedRange == range) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+
+                if (chartUiState.assetPoints.size > 1) {
                     AssetTrendChart(
-                        points = trendPoints,
+                        state = chartUiState,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp)
@@ -250,32 +274,33 @@ private fun formatCurrency(amount: Double): String {
 }
 
 @Composable
-fun AssetTrendChart(points: List<Float>, modifier: Modifier = Modifier) {
-    if (points.size < 2) return
+fun AssetTrendChart(state: ChartUiState, modifier: Modifier = Modifier) {
+    val values = state.assetPoints.map { it.value }
+    if (values.size < 2) return
     val lineColor = MaterialTheme.colorScheme.primary
     val gradientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     
     Canvas(modifier = modifier) {
-        val maxVal = points.maxOrNull() ?: 0f
-        val minVal = points.minOrNull() ?: 0f
+        val maxVal = values.maxOrNull() ?: 0f
+        val minVal = values.minOrNull() ?: 0f
         val range = (maxVal - minVal).coerceAtLeast(0.1f)
         
         val width = size.width
         val height = size.height
-        val pointSpacing = width / (points.size - 1)
+        val pointSpacing = width / (values.size - 1)
         
         val path = Path()
         
-        for (i in points.indices) {
+        for (i in values.indices) {
             val x = i * pointSpacing
             // Calculate y, mapping the value within the 10%-90% height range
-            val y = height - ((points[i] - minVal) / range) * height * 0.8f - height * 0.1f
+            val y = height - ((values[i] - minVal) / range) * height * 0.8f - height * 0.1f
             
             if (i == 0) {
                 path.moveTo(x, y)
             } else {
                 val prevX = (i - 1) * pointSpacing
-                val prevY = height - ((points[i - 1] - minVal) / range) * height * 0.8f - height * 0.1f
+                val prevY = height - ((values[i - 1] - minVal) / range) * height * 0.8f - height * 0.1f
                 
                 // Cubic bezier for smooth curve
                 val cx = (prevX + x) / 2
