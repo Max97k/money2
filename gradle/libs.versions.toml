@@ -21,7 +21,7 @@ koin = "4.2.2"
 
 # Retrofit / Network
 retrofit = "3.0.0"
-okhttp = "5.4.0"
+okhttp = "5.5.0"
 
 # Kotlinx Serialization & Coroutines
 kotlinxSerializationJson = "1.11.0"
